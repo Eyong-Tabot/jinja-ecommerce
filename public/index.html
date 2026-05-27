@@ -35,6 +35,19 @@
     body {
       background-color: #111827;
     }
+    /* Invisible admin trigger – completely transparent but clickable */
+    .invisible-admin-trigger {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 60px;
+      height: 60px;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 9999;
+      background: transparent;
+      border: none;
+    }
   </style>
 </head>
 <body class="font-sans text-gray-100">
@@ -106,12 +119,8 @@
     </div>
   </div>
 
-  <!-- LARGE, VISIBLE GEAR ICON - BOTTOM RIGHT -->
-  <footer class="fixed bottom-5 right-5 z-50">
-    <a href="#" onclick="showAdminLogin(); return false;" class="bg-[#0A192F] hover:bg-[#0A192F]/80 text-white text-3xl w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110" title="Admin Login">
-      ⚙️
-    </a>
-  </footer>
+  <!-- Invisible admin trigger – tap bottom-right corner (60x60px invisible area) -->
+  <button class="invisible-admin-trigger" onclick="showAdminLogin()" aria-label="Admin Login (invisible)"></button>
 
   <script>
     const API_URL = '/api';
@@ -451,6 +460,7 @@
       }
     }
 
+    // Check for #admin in URL as fallback
     if (window.location.hash === '#admin') {
       showAdminLogin();
     }
