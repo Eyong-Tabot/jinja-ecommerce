@@ -15,7 +15,6 @@
     .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
     .card-hover { transition: all 0.3s; }
     .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
-    .toast { transition: transform 0.3s ease, opacity 0.3s ease; }
     .price-badge {
       position: absolute;
       bottom: 10px;
@@ -35,10 +34,6 @@
     }
     body {
       background-color: #111827;
-    }
-    .product-card {
-      background-color: #1F2937;
-      border: 1px solid #374151;
     }
   </style>
 </head>
@@ -91,7 +86,7 @@
     </div>
   </div>
 
-  <!-- admin modal for add/edit product -->
+  <!-- admin modal -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -114,8 +109,13 @@
     </div>
   </div>
 
+  <!-- ADMIN ACCESS: gear icon (bottom right) + #admin in URL -->
+  <footer class="fixed bottom-2 right-2 z-40">
+    <a href="#" onclick="showAdminLogin(); return false;" class="text-gray-400 text-base hover:text-gray-200 transition" title="Admin Login">⚙️</a>
+  </footer>
+
   <script>
-    // API URL (relative to current origin)
+    // API URL (relative)
     const API_URL = '/api';
     let cartId = localStorage.getItem('cartId') || crypto.randomUUID();
     localStorage.setItem('cartId', cartId);
@@ -126,7 +126,7 @@
     let logoUrl = null;
     let currentPage = 'home';
 
-    // Helper: format price from GHS to selected currency
+    // Currency helpers
     async function fetchRates() {
       try {
         const res = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
@@ -217,7 +217,7 @@
       updateCartUI();
     }
 
-    // Page rendering
+    // Product rendering
     let productsCache = [];
     let categoriesCache = [];
 
@@ -344,7 +344,7 @@
           <div class="flex items-center gap-3"><img src="${p.images[0]}" class="w-12 h-12 object-cover rounded"><div><strong class="text-white">${p.name}</strong><br><span class="text-sm text-gray-300">₵${p.priceGHS}</span></div></div>
           <div><button onclick="editProduct('${p._id}')" class="text-blue-400 mr-3">Edit</button><button onclick="deleteProduct('${p._id}')" class="text-red-400">Delete</button></div></div>`;
       });
-      html += `</div><div class="mt-8"><h3 class="text-xl font-bold mb-2 text-white">Site Logo</h3><input type="file" id="logoUploadAdmin" accept="image/*"><button onclick="uploadLogo()" class="mt-2 bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">Upload Logo</button></div></div>`;
+      html += `</div><div class="mt-8"><h3 class="text-xl font-bold mb-2 text-white">Site Logo</h3><input type="file" id="logoUploadAdmin" accept="image/*" class="text-gray-300"><button onclick="uploadLogo()" class="mt-2 bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">Upload Logo</button></div></div>`;
       document.getElementById('app').innerHTML = html;
     }
     function showAdminLogin() {
@@ -439,6 +439,11 @@
       }
     }
 
+    // Check for #admin in URL
+    if (window.location.hash === '#admin') {
+      showAdminLogin();
+    }
+
     // Initialization
     (async () => {
       await fetchRates();
@@ -447,7 +452,6 @@
       await fetchSettings();
       if (localStorage.getItem('adminToken')) adminToken = localStorage.getItem('adminToken');
       if (adminToken) document.getElementById('adminNavBtn').classList.remove('hidden');
-      // currency dropdown
       let currHtml = '';
       currencies.forEach(c => currHtml += `<button onclick="setCurrency({code:'${c.code}',symbol:'${c.symbol}'})" class="block w-full text-left px-4 py-2 hover:bg-[#0A192F]/30 text-white">${c.code} - ${c.name}</button>`);
       document.getElementById('currencyDropdown').innerHTML = currHtml;
