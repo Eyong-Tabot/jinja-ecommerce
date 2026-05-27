@@ -39,7 +39,6 @@
 </head>
 <body class="font-sans text-gray-100">
 
-  <!-- navigation -->
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="text-3xl md:text-4xl font-bold cursor-pointer flex items-center" onclick="showPage('home')">
@@ -68,7 +67,6 @@
 
   <div id="app" class="pt-20 min-h-screen pb-16"></div>
 
-  <!-- cart sidebar -->
   <div id="cartSidebar" class="fixed top-0 right-0 w-full md:w-96 h-full bg-gray-800 shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col border-l border-gray-700">
     <div class="p-5 flex-1 flex flex-col">
       <div class="flex justify-between items-center mb-4">
@@ -86,7 +84,6 @@
     </div>
   </div>
 
-  <!-- admin modal -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -109,13 +106,11 @@
     </div>
   </div>
 
-  <!-- ADMIN ACCESS: gear icon (bottom right) + #admin in URL -->
   <footer class="fixed bottom-2 right-2 z-40">
     <a href="#" onclick="showAdminLogin(); return false;" class="text-gray-400 text-base hover:text-gray-200 transition" title="Admin Login">⚙️</a>
   </footer>
 
   <script>
-    // API URL (relative)
     const API_URL = '/api';
     let cartId = localStorage.getItem('cartId') || crypto.randomUUID();
     localStorage.setItem('cartId', cartId);
@@ -126,7 +121,6 @@
     let logoUrl = null;
     let currentPage = 'home';
 
-    // Currency helpers
     async function fetchRates() {
       try {
         const res = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
@@ -147,7 +141,6 @@
       return selectedCurrency.symbol + val.toFixed(2);
     }
 
-    // Cart functions
     async function fetchCart() {
       try {
         const res = await axios.get(`${API_URL}/cart/${cartId}`);
@@ -201,7 +194,6 @@
       window.location.href = `https://wa.me/237671332423?text=${encodeURIComponent(msg)}`;
     }
 
-    // Currency dropdown
     function toggleCurrencyDropdown() { document.getElementById('currencyDropdown').classList.toggle('hidden'); }
     const currencies = [
       { code: 'USD', symbol: '$', name: 'US Dollar' }, { code: 'EUR', symbol: '€', name: 'Euro' },
@@ -217,7 +209,6 @@
       updateCartUI();
     }
 
-    // Product rendering
     let productsCache = [];
     let categoriesCache = [];
 
@@ -324,7 +315,7 @@
       document.getElementById('pagination').innerHTML = pagHtml;
     }
 
-    // Admin functions
+    // Admin functions with base64 image conversion
     async function adminLogin(email, password) {
       try {
         const res = await axios.post(`${API_URL}/admin/login`, { email, password });
@@ -357,6 +348,7 @@
         </div>
       `;
     }
+
     function openProductModal(productId = null) {
       window.editingProductId = productId;
       document.getElementById('modalTitle').innerText = productId ? 'Edit Product' : 'Add Product';
@@ -382,26 +374,45 @@
     }
     function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); window.editingProductId = null; }
     function removeTempImage(idx) { window.existingImages.splice(idx,1); openProductModal(window.editingProductId); }
+
+    // Convert file to base64
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = new FormData();
-      formData.append('name', document.getElementById('prodName').value);
-      formData.append('description', document.getElementById('prodDesc').value);
-      formData.append('priceGHS', document.getElementById('prodPrice').value);
-      formData.append('category', document.getElementById('prodCategory').value);
-      formData.append('inStock', document.getElementById('prodInStock').checked);
-      formData.append('stockQuantity', 999);
-      if (window.existingImages) formData.append('existingImages', JSON.stringify(window.existingImages));
+      const name = document.getElementById('prodName').value;
+      const description = document.getElementById('prodDesc').value;
+      const priceGHS = parseFloat(document.getElementById('prodPrice').value);
+      const category = document.getElementById('prodCategory').value;
+      const inStock = document.getElementById('prodInStock').checked;
+      let images = window.existingImages || [];
       const files = document.getElementById('prodImages').files;
-      for (let f of files) formData.append('images', f);
+      if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const base64 = await fileToBase64(files[i]);
+          images.push(base64);
+        }
+      }
+      const productData = {
+        name, description, priceGHS, category, inStock, images,
+        stockQuantity: 999
+      };
       const url = window.editingProductId ? `${API_URL}/admin/products/${window.editingProductId}` : `${API_URL}/admin/products`;
       const method = window.editingProductId ? 'put' : 'post';
-      await axios[method](url, formData, { headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'multipart/form-data' } });
+      await axios[method](url, productData, { headers: { Authorization: `Bearer ${adminToken}` } });
       closeAdminModal();
       showAdminPanel();
       if (currentPage === 'home') renderHome();
       else if (currentPage === 'shop') renderShop();
     });
+
     async function deleteProduct(id) {
       if (!confirm('Delete product?')) return;
       await axios.delete(`${API_URL}/admin/products/${id}`, { headers: { Authorization: `Bearer ${adminToken}` } });
@@ -410,15 +421,20 @@
       else if (currentPage === 'shop') renderShop();
     }
     function editProduct(id) { openProductModal(id); }
+
     async function uploadLogo() {
-      const file = document.getElementById('logoUploadAdmin').files[0];
-      if (!file) return;
-      const formData = new FormData();
-      formData.append('logo', file);
-      await axios.post(`${API_URL}/admin/logo`, formData, { headers: { Authorization: `Bearer ${adminToken}` } });
+      const fileInput = document.getElementById('logoUploadAdmin');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please select a logo file first');
+        return;
+      }
+      const base64 = await fileToBase64(file);
+      await axios.post(`${API_URL}/admin/logo`, { logoBase64: base64 }, { headers: { Authorization: `Bearer ${adminToken}` } });
       alert('Logo updated');
       fetchSettings();
     }
+
     async function fetchSettings() {
       const res = await axios.get(`${API_URL}/settings`);
       if (res.data.logoUrl) {
@@ -439,12 +455,10 @@
       }
     }
 
-    // Check for #admin in URL
     if (window.location.hash === '#admin') {
       showAdminLogin();
     }
 
-    // Initialization
     (async () => {
       await fetchRates();
       setInterval(fetchRates, 3600000);
