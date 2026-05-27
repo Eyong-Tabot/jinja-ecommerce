@@ -4,14 +4,11 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
-app.use(express.static('public')); // will serve index.html
+app.use(express.json({ limit: '10mb' })); // allow larger base64 images
+app.use(express.static('public'));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI);
@@ -20,9 +17,9 @@ mongoose.connect(process.env.MONGODB_URI);
 const productSchema = new mongoose.Schema({
   name: String,
   description: String,
-  priceGHS: Number,  // price in Ghana Cedis
+  priceGHS: Number,
   category: String,
-  images: [String],
+  images: [String], // base64 strings
   inStock: Boolean,
   stockQuantity: Number,
   createdAt: Date
@@ -47,18 +44,6 @@ const Admin = mongoose.model('Admin', adminSchema);
 
 const settingSchema = new mongoose.Schema({ key: String, value: mongoose.Schema.Types.Mixed });
 const Setting = mongoose.model('Setting', settingSchema);
-
-// Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: { folder: 'jinja_products', allowed_formats: ['jpg','jpeg','png','webp'] }
-});
-const upload = multer({ storage });
 
 // Auth middleware
 const adminAuth = (req, res, next) => {
@@ -131,7 +116,7 @@ app.delete('/api/cart/:cartId', async (req, res) => {
   res.json({ message: 'cleared' });
 });
 
-// ---------- ADMIN ROUTES ----------
+// ---------- ADMIN ROUTES (base64 images, no Cloudinary) ----------
 app.post('/api/admin/login', async (req, res) => {
   const admin = await Admin.findOne({ email: req.body.email });
   if (!admin || !(await bcrypt.compare(req.body.password, admin.password)))
@@ -142,35 +127,33 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.get('/api/admin/verify', adminAuth, (req, res) => res.json({ valid: true }));
 
-app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req, res) => {
-  const images = req.files.map(f => f.path);
+app.post('/api/admin/products', adminAuth, async (req, res) => {
+  const { name, description, priceGHS, category, images, inStock, stockQuantity } = req.body;
   const product = new Product({
-    name: req.body.name,
-    description: req.body.description,
-    priceGHS: parseFloat(req.body.priceGHS),
-    category: req.body.category,
-    images,
-    inStock: req.body.inStock === 'true',
-    stockQuantity: parseInt(req.body.stockQuantity) || 999,
+    name,
+    description,
+    priceGHS: parseFloat(priceGHS),
+    category,
+    images: images || [], // array of base64 strings
+    inStock: inStock === true || inStock === 'true',
+    stockQuantity: parseInt(stockQuantity) || 999,
     createdAt: new Date()
   });
   await product.save();
   res.json(product);
 });
 
-app.put('/api/admin/products/:id', adminAuth, upload.array('images', 5), async (req, res) => {
+app.put('/api/admin/products/:id', adminAuth, async (req, res) => {
+  const { name, description, priceGHS, category, images, inStock, stockQuantity } = req.body;
   const product = await Product.findById(req.params.id);
-  let images = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
-  if (req.files) images.push(...req.files.map(f => f.path));
-  Object.assign(product, {
-    name: req.body.name,
-    description: req.body.description,
-    priceGHS: parseFloat(req.body.priceGHS),
-    category: req.body.category,
-    images,
-    inStock: req.body.inStock === 'true',
-    stockQuantity: parseInt(req.body.stockQuantity)
-  });
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+  product.name = name;
+  product.description = description;
+  product.priceGHS = parseFloat(priceGHS);
+  product.category = category;
+  product.images = images || [];
+  product.inStock = inStock === true || inStock === 'true';
+  product.stockQuantity = parseInt(stockQuantity) || 999;
   await product.save();
   res.json(product);
 });
@@ -185,9 +168,10 @@ app.get('/api/admin/products', adminAuth, async (req, res) => {
   res.json(products);
 });
 
-app.post('/api/admin/logo', adminAuth, upload.single('logo'), async (req, res) => {
-  await Setting.findOneAndUpdate({ key: 'logo' }, { key: 'logo', value: req.file.path }, { upsert: true });
-  res.json({ logoUrl: req.file.path });
+app.post('/api/admin/logo', adminAuth, async (req, res) => {
+  const { logoBase64 } = req.body; // receive base64 string
+  await Setting.findOneAndUpdate({ key: 'logo' }, { key: 'logo', value: logoBase64 }, { upsert: true });
+  res.json({ logoUrl: logoBase64 });
 });
 
 app.get('/api/settings', async (req, res) => {
