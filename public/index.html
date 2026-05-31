@@ -61,7 +61,7 @@
       <div class="flex items-center space-x-4 md:space-x-6">
         <a href="#" onclick="showPage('home')" class="hover:text-[#0A192F] transition text-sm md:text-base text-gray-200">Home</a>
         <a href="#" onclick="showPage('shop')" class="hover:text-[#0A192F] transition text-sm md:text-base text-gray-200">Shop</a>
-        <a href="#" id="adminNavBtn" onclick="showPage('adminPanel')" class="hover:text-[#0A192F] transition text-sm md:text-base text-gray-200 hidden">Admin</a>
+        <!-- Admin button completely removed from navigation -->
         <div class="relative">
           <button onclick="toggleCurrencyDropdown()" class="bg-[#0A192F]/30 px-2 md:px-3 py-2 rounded-lg flex items-center space-x-2 text-sm text-white">
             <i class="fas fa-dollar-sign text-white"></i>
@@ -119,8 +119,8 @@
     </div>
   </div>
 
-  <!-- Invisible admin trigger – tap bottom-right corner (60x60px invisible area) -->
-  <button class="invisible-admin-trigger" onclick="showAdminLogin()" aria-label="Admin Login (invisible)"></button>
+  <!-- Invisible admin trigger – tap bottom-right corner (60x60 invisible area) -->
+  <button class="invisible-admin-trigger" onclick="handleAdminTrigger()" aria-label="Admin (invisible)"></button>
 
   <script>
     const API_URL = '/api';
@@ -203,7 +203,8 @@
         msg += `${idx+1}. ${p.name} x${item.quantity} - ${formatPrice(p.priceGHS * item.quantity)}\n`;
       });
       msg += `\n*Total: ${formatPrice(totalGHS)}*\nLocation: Accra, Ghana`;
-      window.location.href = `https://wa.me/237671332423?text=${encodeURIComponent(msg)}`;
+      // Updated WhatsApp number: +233 54 631 1518 -> 233546311518
+      window.location.href = `https://wa.me/233546311518?text=${encodeURIComponent(msg)}`;
     }
 
     function toggleCurrencyDropdown() { document.getElementById('currencyDropdown').classList.toggle('hidden'); }
@@ -327,18 +328,21 @@
       document.getElementById('pagination').innerHTML = pagHtml;
     }
 
-    // Admin functions with base64 image conversion
+    // Admin functions - no navigation button, only invisible trigger
     async function adminLogin(email, password) {
       try {
         const res = await axios.post(`${API_URL}/admin/login`, { email, password });
         adminToken = res.data.token;
         localStorage.setItem('adminToken', adminToken);
-        document.getElementById('adminNavBtn').classList.remove('hidden');
+        // No admin button to show/hide, so just show admin panel
         showAdminPanel();
       } catch(e) { alert('Login failed'); }
     }
     async function showAdminPanel() {
-      if (!adminToken) { showAdminLogin(); return; }
+      if (!adminToken) {
+        showAdminLogin();
+        return;
+      }
       const res = await axios.get(`${API_URL}/admin/products`, { headers: { Authorization: `Bearer ${adminToken}` } });
       const products = res.data;
       let html = `<div class="container mx-auto px-4 py-8"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-white">Admin Panel</h1><button onclick="openProductModal()" class="bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">+ Add Product</button></div><div class="grid gap-3">`;
@@ -359,6 +363,15 @@
           <button onclick="adminLogin(document.getElementById('adminEmail').value, document.getElementById('adminPass').value)" class="w-full bg-[#0A192F] hover:bg-[#0A192F]/80 py-3 rounded text-white">Login</button>
         </div>
       `;
+    }
+
+    // Handle the invisible trigger: if admin token exists, show admin panel; else show login
+    function handleAdminTrigger() {
+      if (adminToken) {
+        showAdminPanel();
+      } else {
+        showAdminLogin();
+      }
     }
 
     function openProductModal(productId = null) {
@@ -454,15 +467,12 @@
     function showPage(page) {
       if (page === 'home') { currentPage = 'home'; renderHome(); }
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
-      else if (page === 'adminPanel') {
-        if (adminToken) showAdminPanel();
-        else showAdminLogin();
-      }
+      // Admin panel is now only accessible via invisible trigger, not via showPage
     }
 
-    // Check for #admin in URL as fallback
+    // Check for #admin in URL as fallback (optional)
     if (window.location.hash === '#admin') {
-      showAdminLogin();
+      handleAdminTrigger();
     }
 
     (async () => {
@@ -470,8 +480,7 @@
       setInterval(fetchRates, 3600000);
       await fetchCart();
       await fetchSettings();
-      if (localStorage.getItem('adminToken')) adminToken = localStorage.getItem('adminToken');
-      if (adminToken) document.getElementById('adminNavBtn').classList.remove('hidden');
+      // No admin button to show/hide
       let currHtml = '';
       currencies.forEach(c => currHtml += `<button onclick="setCurrency({code:'${c.code}',symbol:'${c.symbol}'})" class="block w-full text-left px-4 py-2 hover:bg-[#0A192F]/30 text-white">${c.code} - ${c.name}</button>`);
       document.getElementById('currencyDropdown').innerHTML = currHtml;
