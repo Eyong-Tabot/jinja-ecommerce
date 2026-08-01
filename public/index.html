@@ -35,10 +35,10 @@
     body {
       background-color: #111827;
     }
-    /* Invisible admin trigger – top‑left, under logo */
+    /* Invisible admin trigger – bottom‑left corner */
     .invisible-admin-trigger {
       position: fixed;
-      top: 70px;   /* below the navbar */
+      bottom: 10px;
       left: 10px;
       width: 80px;
       height: 80px;
@@ -47,6 +47,23 @@
       z-index: 99999;
       background: transparent;
       border: none;
+    }
+    /* Footer styling */
+    .site-footer {
+      background-color: #0A192F;
+      color: #9CA3AF;
+      padding: 20px 0;
+      margin-top: 40px;
+      border-top: 1px solid #1F2937;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .site-footer a {
+      color: #9CA3AF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      color: white;
     }
   </style>
 </head>
@@ -61,7 +78,6 @@
       <div class="flex items-center space-x-4 md:space-x-6">
         <a href="#" onclick="showPage('home')" class="hover:text-[#0A192F] transition text-sm md:text-base text-gray-200">Home</a>
         <a href="#" onclick="showPage('shop')" class="hover:text-[#0A192F] transition text-sm md:text-base text-gray-200">Shop</a>
-        <!-- Admin button removed -->
         <div class="relative">
           <button onclick="toggleCurrencyDropdown()" class="bg-[#0A192F]/30 px-2 md:px-3 py-2 rounded-lg flex items-center space-x-2 text-sm text-white">
             <i class="fas fa-dollar-sign text-white"></i>
@@ -79,6 +95,14 @@
   </nav>
 
   <div id="app" class="pt-20 min-h-screen pb-16"></div>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container mx-auto px-4">
+      <p>&copy; 2025 Jinja – Room Decor Accra. All rights reserved.</p>
+      <p class="text-sm mt-1">Premium room decoration items from Accra to the world.</p>
+    </div>
+  </footer>
 
   <div id="cartSidebar" class="fixed top-0 right-0 w-full md:w-96 h-full bg-gray-800 shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col border-l border-gray-700">
     <div class="p-5 flex-1 flex flex-col">
@@ -119,7 +143,7 @@
     </div>
   </div>
 
-  <!-- Invisible admin trigger – top-left, under logo -->
+  <!-- Invisible admin trigger – bottom‑left corner -->
   <button class="invisible-admin-trigger" onclick="handleAdminTrigger()" aria-label="Admin (invisible)"></button>
 
   <script>
@@ -391,7 +415,6 @@
       `;
     }
 
-    // Password change function
     async function changePassword() {
       const oldPassword = document.getElementById('oldPassword').value;
       const newPassword = document.getElementById('newPassword').value;
