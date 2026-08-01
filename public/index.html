@@ -52,14 +52,34 @@
       color: white;
     }
     .admin-link {
-      color: #4B5563;
-      font-size: 0.75rem;
+      color: #6B7280;
+      font-size: 0.85rem;
       margin-left: 10px;
       cursor: pointer;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
     }
     .admin-link:hover {
+      color: #D1D5DB;
+      background: #1F2937;
+    }
+    .admin-gear {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      color: #4B5563;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 999;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+    }
+    .admin-gear:hover {
+      opacity: 1;
       color: #9CA3AF;
-      text-decoration: underline;
     }
     .desc-toggle-btn {
       color: #0A192F;
@@ -112,10 +132,15 @@
       <p>&copy; 2025 Jinja – Room Decor Accra. All rights reserved.</p>
       <p class="text-sm mt-1">
         Premium room decoration items from Accra to the world.
-        <span class="admin-link" onclick="handleAdminTrigger()">Admin Login</span>
+        <button class="admin-link" onclick="handleAdminTrigger()">Admin Login</button>
       </p>
     </div>
   </footer>
+
+  <!-- Small gear icon in bottom-right as extra fallback -->
+  <div class="admin-gear" onclick="handleAdminTrigger()" title="Admin Login">
+    <i class="fas fa-cog"></i>
+  </div>
 
   <div id="cartSidebar" class="fixed top-0 right-0 w-full md:w-96 h-full bg-gray-800 shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col border-l border-gray-700">
     <div class="p-5 flex-1 flex flex-col">
@@ -479,8 +504,9 @@
       }
     }
 
-    // Admin trigger: double-tap the logo OR footer link
+    // Admin trigger: double-tap the logo OR footer link OR gear icon
     function handleAdminTrigger() {
+      console.log('Admin trigger clicked'); // helps debug
       if (adminToken) {
         showAdminPanel();
       } else {
