@@ -7,10 +7,9 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // allow larger base64 images
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI);
 
 // ---------- MODELS ----------
@@ -19,7 +18,7 @@ const productSchema = new mongoose.Schema({
   description: String,
   priceGHS: Number,
   category: String,
-  images: [String], // base64 strings
+  images: [String],
   inStock: Boolean,
   stockQuantity: Number,
   createdAt: Date
@@ -116,7 +115,7 @@ app.delete('/api/cart/:cartId', async (req, res) => {
   res.json({ message: 'cleared' });
 });
 
-// ---------- ADMIN ROUTES (base64 images, no Cloudinary) ----------
+// ---------- ADMIN ROUTES ----------
 app.post('/api/admin/login', async (req, res) => {
   const admin = await Admin.findOne({ email: req.body.email });
   if (!admin || !(await bcrypt.compare(req.body.password, admin.password)))
@@ -125,16 +124,27 @@ app.post('/api/admin/login', async (req, res) => {
   res.json({ token });
 });
 
+// Change password (requires auth)
+app.post('/api/admin/change-password', adminAuth, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const admin = await Admin.findById(req.adminId);
+  if (!admin) return res.status(404).json({ error: 'Admin not found' });
+  if (!(await bcrypt.compare(oldPassword, admin.password)))
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  admin.password = newPassword;
+  await admin.save();
+  res.json({ message: 'Password updated successfully' });
+});
+
 app.get('/api/admin/verify', adminAuth, (req, res) => res.json({ valid: true }));
 
 app.post('/api/admin/products', adminAuth, async (req, res) => {
   const { name, description, priceGHS, category, images, inStock, stockQuantity } = req.body;
   const product = new Product({
-    name,
-    description,
+    name, description,
     priceGHS: parseFloat(priceGHS),
     category,
-    images: images || [], // array of base64 strings
+    images: images || [],
     inStock: inStock === true || inStock === 'true',
     stockQuantity: parseInt(stockQuantity) || 999,
     createdAt: new Date()
@@ -169,7 +179,7 @@ app.get('/api/admin/products', adminAuth, async (req, res) => {
 });
 
 app.post('/api/admin/logo', adminAuth, async (req, res) => {
-  const { logoBase64 } = req.body; // receive base64 string
+  const { logoBase64 } = req.body;
   await Setting.findOneAndUpdate({ key: 'logo' }, { key: 'logo', value: logoBase64 }, { upsert: true });
   res.json({ logoUrl: logoBase64 });
 });
@@ -184,7 +194,7 @@ app.get('*', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Create default admin
+// Create default admin if none exists
 const init = async () => {
   const exists = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
   if (!exists) await Admin.create({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD });
