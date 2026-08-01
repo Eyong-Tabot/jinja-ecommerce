@@ -51,6 +51,16 @@
     .site-footer a:hover {
       color: white;
     }
+    .admin-link {
+      color: #4B5563;
+      font-size: 0.75rem;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .admin-link:hover {
+      color: #9CA3AF;
+      text-decoration: underline;
+    }
     .desc-toggle-btn {
       color: #0A192F;
       cursor: pointer;
@@ -96,10 +106,14 @@
 
   <div id="app" class="pt-20 min-h-screen pb-16"></div>
 
+  <!-- Footer with visible Admin Login link -->
   <footer class="site-footer">
     <div class="container mx-auto px-4">
       <p>&copy; 2025 Jinja – Room Decor Accra. All rights reserved.</p>
-      <p class="text-sm mt-1">Premium room decoration items from Accra to the world.</p>
+      <p class="text-sm mt-1">
+        Premium room decoration items from Accra to the world.
+        <span class="admin-link" onclick="handleAdminTrigger()">Admin Login</span>
+      </p>
     </div>
   </footer>
 
@@ -465,7 +479,7 @@
       }
     }
 
-    // Admin trigger: double-tap the logo
+    // Admin trigger: double-tap the logo OR footer link
     function handleAdminTrigger() {
       if (adminToken) {
         showAdminPanel();
