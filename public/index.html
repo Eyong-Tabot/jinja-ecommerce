@@ -35,11 +35,11 @@
     body {
       background-color: #111827;
     }
-    /* Invisible admin trigger – completely transparent but clickable, large enough to tap easily */
+    /* Invisible admin trigger – top‑left, under logo */
     .invisible-admin-trigger {
       position: fixed;
-      bottom: 10px;
-      right: 10px;
+      top: 70px;   /* below the navbar */
+      left: 10px;
       width: 80px;
       height: 80px;
       opacity: 0;
@@ -47,7 +47,6 @@
       z-index: 99999;
       background: transparent;
       border: none;
-      /* For debugging, you can temporarily set opacity:0.1 to see the area */
     }
   </style>
 </head>
@@ -62,7 +61,7 @@
       <div class="flex items-center space-x-4 md:space-x-6">
         <a href="#" onclick="showPage('home')" class="hover:text-[#0A192F] transition text-sm md:text-base text-gray-200">Home</a>
         <a href="#" onclick="showPage('shop')" class="hover:text-[#0A192F] transition text-sm md:text-base text-gray-200">Shop</a>
-        <!-- Admin button completely removed from navigation -->
+        <!-- Admin button removed -->
         <div class="relative">
           <button onclick="toggleCurrencyDropdown()" class="bg-[#0A192F]/30 px-2 md:px-3 py-2 rounded-lg flex items-center space-x-2 text-sm text-white">
             <i class="fas fa-dollar-sign text-white"></i>
@@ -120,7 +119,7 @@
     </div>
   </div>
 
-  <!-- Invisible admin trigger – tap bottom-right corner (80x80 invisible area) -->
+  <!-- Invisible admin trigger – top-left, under logo -->
   <button class="invisible-admin-trigger" onclick="handleAdminTrigger()" aria-label="Admin (invisible)"></button>
 
   <script>
@@ -204,7 +203,6 @@
         msg += `${idx+1}. ${p.name} x${item.quantity} - ${formatPrice(p.priceGHS * item.quantity)}\n`;
       });
       msg += `\n*Total: ${formatPrice(totalGHS)}*\nLocation: Accra, Ghana`;
-      // WhatsApp number: +233 54 631 1518 -> 233546311518
       window.location.href = `https://wa.me/233546311518?text=${encodeURIComponent(msg)}`;
     }
 
@@ -329,16 +327,16 @@
       document.getElementById('pagination').innerHTML = pagHtml;
     }
 
-    // Admin functions - no navigation button, only invisible trigger
+    // Admin functions
     async function adminLogin(email, password) {
       try {
         const res = await axios.post(`${API_URL}/admin/login`, { email, password });
         adminToken = res.data.token;
         localStorage.setItem('adminToken', adminToken);
-        // No admin button to show/hide, so just show admin panel
         showAdminPanel();
       } catch(e) { alert('Login failed'); }
     }
+
     async function showAdminPanel() {
       if (!adminToken) {
         showAdminLogin();
@@ -346,15 +344,42 @@
       }
       const res = await axios.get(`${API_URL}/admin/products`, { headers: { Authorization: `Bearer ${adminToken}` } });
       const products = res.data;
-      let html = `<div class="container mx-auto px-4 py-8"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-white">Admin Panel</h1><button onclick="openProductModal()" class="bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">+ Add Product</button></div><div class="grid gap-3">`;
+      let html = `
+        <div class="container mx-auto px-4 py-8">
+          <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-white">Admin Panel</h1>
+            <button onclick="openProductModal()" class="bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">+ Add Product</button>
+          </div>
+          <div class="grid gap-3">
+      `;
       products.forEach(p => {
         html += `<div class="bg-gray-800 p-4 rounded flex justify-between items-center border border-gray-700">
           <div class="flex items-center gap-3"><img src="${p.images[0]}" class="w-12 h-12 object-cover rounded"><div><strong class="text-white">${p.name}</strong><br><span class="text-sm text-gray-300">₵${p.priceGHS}</span></div></div>
           <div><button onclick="editProduct('${p._id}')" class="text-blue-400 mr-3">Edit</button><button onclick="deleteProduct('${p._id}')" class="text-red-400">Delete</button></div></div>`;
       });
-      html += `</div><div class="mt-8"><h3 class="text-xl font-bold mb-2 text-white">Site Logo</h3><input type="file" id="logoUploadAdmin" accept="image/*" class="text-gray-300"><button onclick="uploadLogo()" class="mt-2 bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">Upload Logo</button></div></div>`;
+      html += `
+          </div>
+          <!-- Logo upload -->
+          <div class="mt-8">
+            <h3 class="text-xl font-bold mb-2 text-white">Site Logo</h3>
+            <input type="file" id="logoUploadAdmin" accept="image/*" class="text-gray-300">
+            <button onclick="uploadLogo()" class="mt-2 bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">Upload Logo</button>
+          </div>
+          <!-- Password change -->
+          <div class="mt-8 border-t border-gray-700 pt-6">
+            <h3 class="text-xl font-bold mb-2 text-white">Change Admin Password</h3>
+            <div class="max-w-sm">
+              <input type="password" id="oldPassword" placeholder="Current password" class="w-full mb-3 p-3 bg-gray-900 rounded border border-gray-600 text-white">
+              <input type="password" id="newPassword" placeholder="New password" class="w-full mb-3 p-3 bg-gray-900 rounded border border-gray-600 text-white">
+              <input type="password" id="confirmPassword" placeholder="Confirm new password" class="w-full mb-3 p-3 bg-gray-900 rounded border border-gray-600 text-white">
+              <button onclick="changePassword()" class="bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">Update Password</button>
+            </div>
+          </div>
+        </div>
+      `;
       document.getElementById('app').innerHTML = html;
     }
+
     function showAdminLogin() {
       document.getElementById('app').innerHTML = `
         <div class="max-w-md mx-auto mt-20 bg-gray-800 p-8 rounded-xl border border-gray-700">
@@ -366,7 +391,32 @@
       `;
     }
 
-    // Handle the invisible trigger: if admin token exists, show admin panel; else show login
+    // Password change function
+    async function changePassword() {
+      const oldPassword = document.getElementById('oldPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        return;
+      }
+      if (newPassword.length < 6) {
+        alert('New password must be at least 6 characters');
+        return;
+      }
+      try {
+        const res = await axios.post(`${API_URL}/admin/change-password`, { oldPassword, newPassword }, {
+          headers: { Authorization: `Bearer ${adminToken}` }
+        });
+        alert(res.data.message);
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } catch (e) {
+        alert(e.response?.data?.error || 'Failed to update password');
+      }
+    }
+
     function handleAdminTrigger() {
       if (adminToken) {
         showAdminPanel();
@@ -468,10 +518,9 @@
     function showPage(page) {
       if (page === 'home') { currentPage = 'home'; renderHome(); }
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
-      // Admin panel is now only accessible via invisible trigger, not via showPage
     }
 
-    // Check for #admin in URL as fallback (reliable)
+    // Fallback: #admin in URL
     if (window.location.hash === '#admin') {
       handleAdminTrigger();
     }
