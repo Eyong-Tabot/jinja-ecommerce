@@ -35,20 +35,6 @@
     body {
       background-color: #111827;
     }
-    /* Invisible admin trigger – bottom‑left corner */
-    .invisible-admin-trigger {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      width: 80px;
-      height: 80px;
-      opacity: 0;
-      cursor: pointer;
-      z-index: 99999;
-      background: transparent;
-      border: none;
-    }
-    /* Footer styling */
     .site-footer {
       background-color: #0A192F;
       color: #9CA3AF;
@@ -65,13 +51,27 @@
     .site-footer a:hover {
       color: white;
     }
+    .desc-toggle-btn {
+      color: #0A192F;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .desc-toggle-btn:hover {
+      color: #1A2F4F;
+    }
   </style>
 </head>
 <body class="font-sans text-gray-100">
 
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="text-3xl md:text-4xl font-bold cursor-pointer flex items-center" onclick="showPage('home')">
+      <!-- Logo – double‑tap to access admin -->
+      <div id="logoContainer" class="text-3xl md:text-4xl font-bold cursor-pointer flex items-center" onclick="showPage('home')" ondblclick="handleAdminTrigger()">
         <span id="logoText" class="bg-gradient-to-r from-[#0A192F] to-white bg-clip-text text-transparent">Jinja</span>
         <img id="logoImg" class="h-14 md:h-16 hidden object-contain" alt="Jinja Logo">
       </div>
@@ -96,7 +96,6 @@
 
   <div id="app" class="pt-20 min-h-screen pb-16"></div>
 
-  <!-- Site Footer -->
   <footer class="site-footer">
     <div class="container mx-auto px-4">
       <p>&copy; 2025 Jinja – Room Decor Accra. All rights reserved.</p>
@@ -142,9 +141,6 @@
       </form>
     </div>
   </div>
-
-  <!-- Invisible admin trigger – bottom‑left corner -->
-  <button class="invisible-admin-trigger" onclick="handleAdminTrigger()" aria-label="Admin (invisible)"></button>
 
   <script>
     const API_URL = '/api';
@@ -259,6 +255,22 @@
       categoriesCache = res.data;
     }
 
+    // Toggle description visibility
+    function toggleDescription(id) {
+      const shortEl = document.getElementById('desc-short-' + id);
+      const fullEl = document.getElementById('desc-full-' + id);
+      const btn = document.getElementById('desc-btn-' + id);
+      if (shortEl.style.display !== 'none') {
+        shortEl.style.display = 'none';
+        fullEl.style.display = 'block';
+        btn.textContent = 'See Less';
+      } else {
+        shortEl.style.display = 'block';
+        fullEl.style.display = 'none';
+        btn.textContent = 'See More';
+      }
+    }
+
     async function renderHome() {
       const data = await fetchProducts(1, 'all', '');
       const allProducts = data.products;
@@ -267,12 +279,18 @@
         productsHtml = '<p class="text-gray-400 col-span-full text-center py-10">No products yet. Check back soon!</p>';
       } else {
         allProducts.forEach(p => {
+          const truncated = p.description.length > 80 ? p.description.substring(0, 80) + '...' : p.description;
+          const showToggle = p.description.length > 80;
           productsHtml += `<div class="bg-gray-800 rounded-xl overflow-hidden card-hover relative border border-gray-700">
             <img src="${p.images[0]}" class="h-56 w-full object-cover">
             <div class="price-badge">${formatPrice(p.priceGHS)}</div>
             <div class="p-4">
               <h3 class="font-bold text-xl text-white">${p.name}</h3>
-              <p class="text-gray-300 text-sm mt-1 line-clamp-2">${p.description.substring(0, 80)}${p.description.length > 80 ? '...' : ''}</p>
+              <div class="text-gray-300 text-sm mt-1">
+                <span id="desc-short-${p._id}">${truncated}</span>
+                <span id="desc-full-${p._id}" style="display:none;">${p.description}</span>
+                ${showToggle ? `<button class="desc-toggle-btn" id="desc-btn-${p._id}" onclick="toggleDescription('${p._id}')">See More</button>` : ''}
+              </div>
               <button onclick="addToCart('${p._id}')" class="mt-3 w-full bg-[#0A192F] hover:bg-[#0A192F]/80 py-2 rounded transition text-white">Add to Cart</button>
             </div>
           </div>`;
@@ -333,12 +351,19 @@
       if (!grid) return;
       let html = '';
       products.forEach(p => {
+        const truncated = p.description.length > 80 ? p.description.substring(0, 80) + '...' : p.description;
+        const showToggle = p.description.length > 80;
         html += `<div class="bg-gray-800 rounded-xl overflow-hidden card-hover relative border border-gray-700">
           <img src="${p.images[0]}" class="h-56 w-full object-cover">
           <div class="price-badge">${formatPrice(p.priceGHS)}</div>
           <div class="p-4">
             <div class="text-sm text-[#0A192F] font-semibold">${p.category}</div>
             <h3 class="font-bold text-lg text-white">${p.name}</h3>
+            <div class="text-gray-300 text-sm mt-1">
+              <span id="desc-short-${p._id}">${truncated}</span>
+              <span id="desc-full-${p._id}" style="display:none;">${p.description}</span>
+              ${showToggle ? `<button class="desc-toggle-btn" id="desc-btn-${p._id}" onclick="toggleDescription('${p._id}')">See More</button>` : ''}
+            </div>
             <button onclick="addToCart('${p._id}')" class="mt-3 w-full bg-[#0A192F] hover:bg-[#0A192F]/80 py-2 rounded transition text-white">Add to Cart</button>
           </div>
         </div>`;
@@ -440,6 +465,7 @@
       }
     }
 
+    // Admin trigger: double-tap the logo
     function handleAdminTrigger() {
       if (adminToken) {
         showAdminPanel();
