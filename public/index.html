@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <!-- Force no-cache for this page -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -74,8 +73,8 @@
 
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <!-- Logo – double‑tap to access admin -->
-      <div id="logoContainer" class="text-3xl md:text-4xl font-bold cursor-pointer flex items-center" onclick="showPage('home')" ondblclick="handleAdminTrigger()">
+      <!-- Logo: only double‑tap to access admin (no single‑click navigation) -->
+      <div id="logoContainer" class="text-3xl md:text-4xl font-bold cursor-pointer flex items-center" ondblclick="handleAdminTrigger()">
         <span id="logoText" class="bg-gradient-to-r from-[#0A192F] to-white bg-clip-text text-transparent">Jinja</span>
         <img id="logoImg" class="h-14 md:h-16 hidden object-contain" alt="Jinja Logo">
       </div>
@@ -100,7 +99,6 @@
 
   <div id="app" class="pt-20 min-h-screen pb-16"></div>
 
-  <!-- Footer without admin link -->
   <footer class="site-footer">
     <div class="container mx-auto px-4">
       <p>&copy; 2025 Jinja – Room Decor Accra. All rights reserved.</p>
@@ -126,7 +124,7 @@
     </div>
   </div>
 
-  <!-- admin modal (same as before) -->
+  <!-- admin modal (unchanged) -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -159,6 +157,10 @@
     let adminToken = localStorage.getItem('adminToken');
     let logoUrl = null;
     let currentPage = 'home';
+
+    // All the existing JavaScript functions remain unchanged.
+    // I'm keeping the full code identical to the previous version,
+    // only the logo's onclick was removed.
 
     async function fetchRates() {
       try {
@@ -262,7 +264,6 @@
       categoriesCache = res.data;
     }
 
-    // Toggle description visibility
     function toggleDescription(id) {
       const shortEl = document.getElementById('desc-short-' + id);
       const fullEl = document.getElementById('desc-full-' + id);
@@ -574,7 +575,6 @@
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
     }
 
-    // If URL contains #admin, trigger admin login
     if (window.location.hash === '#admin') {
       handleAdminTrigger();
     }
