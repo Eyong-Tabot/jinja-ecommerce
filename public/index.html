@@ -47,13 +47,6 @@
       text-align: center;
       font-size: 0.9rem;
     }
-    .site-footer a {
-      color: #9CA3AF;
-      text-decoration: none;
-    }
-    .site-footer a:hover {
-      color: white;
-    }
     .desc-toggle-btn {
       color: #0A192F;
       cursor: pointer;
@@ -73,8 +66,8 @@
 
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <!-- Logo: only double‑tap to access admin (no single‑click navigation) -->
-      <div id="logoContainer" class="text-3xl md:text-4xl font-bold cursor-pointer flex items-center" ondblclick="handleAdminTrigger()">
+      <!-- Logo: no click handler at all – purely visual -->
+      <div class="text-3xl md:text-4xl font-bold flex items-center">
         <span id="logoText" class="bg-gradient-to-r from-[#0A192F] to-white bg-clip-text text-transparent">Jinja</span>
         <img id="logoImg" class="h-14 md:h-16 hidden object-contain" alt="Jinja Logo">
       </div>
@@ -124,7 +117,7 @@
     </div>
   </div>
 
-  <!-- admin modal (unchanged) -->
+  <!-- admin modal for add/edit product -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -157,10 +150,6 @@
     let adminToken = localStorage.getItem('adminToken');
     let logoUrl = null;
     let currentPage = 'home';
-
-    // All the existing JavaScript functions remain unchanged.
-    // I'm keeping the full code identical to the previous version,
-    // only the logo's onclick was removed.
 
     async function fetchRates() {
       try {
@@ -471,7 +460,7 @@
       }
     }
 
-    // Admin trigger – only called by double‑tap and #admin
+    // Admin trigger: ONLY via #admin in URL (no logo tap, no double-click)
     function handleAdminTrigger() {
       if (adminToken) {
         showAdminPanel();
@@ -575,6 +564,7 @@
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
     }
 
+    // ONLY admin trigger: #admin in URL
     if (window.location.hash === '#admin') {
       handleAdminTrigger();
     }
