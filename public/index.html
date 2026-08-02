@@ -66,7 +66,7 @@
 
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <!-- Logo: no click handler at all – purely visual -->
+      <!-- Logo: no click handler, purely visual -->
       <div class="text-3xl md:text-4xl font-bold flex items-center">
         <span id="logoText" class="bg-gradient-to-r from-[#0A192F] to-white bg-clip-text text-transparent">Jinja</span>
         <img id="logoImg" class="h-14 md:h-16 hidden object-contain" alt="Jinja Logo">
@@ -117,7 +117,7 @@
     </div>
   </div>
 
-  <!-- admin modal for add/edit product -->
+  <!-- admin modal -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -221,7 +221,8 @@
         msg += `${idx+1}. ${p.name} x${item.quantity} - ${formatPrice(p.priceGHS * item.quantity)}\n`;
       });
       msg += `\n*Total: ${formatPrice(totalGHS)}*\nLocation: Accra, Ghana`;
-      window.location.href = `https://wa.me/233546311518?text=${encodeURIComponent(msg)}`;
+      // Updated WhatsApp number: +233 27 786 9200 -> 233277869200
+      window.location.href = `https://wa.me/233277869200?text=${encodeURIComponent(msg)}`;
     }
 
     function toggleCurrencyDropdown() { document.getElementById('currencyDropdown').classList.toggle('hidden'); }
