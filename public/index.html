@@ -60,13 +60,33 @@
     .desc-toggle-btn:hover {
       color: #1A2F4F;
     }
+
+    /* LOADING SPINNER */
+    .loader-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 60vh;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #1F2937;
+      border-top: 5px solid #0A192F;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="font-sans text-gray-100">
 
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <!-- Logo: no click handler, purely visual -->
+      <!-- Logo: purely visual (no click handler) -->
       <div class="text-3xl md:text-4xl font-bold flex items-center">
         <span id="logoText" class="bg-gradient-to-r from-[#0A192F] to-white bg-clip-text text-transparent">Jinja</span>
         <img id="logoImg" class="h-14 md:h-16 hidden object-contain" alt="Jinja Logo">
@@ -151,6 +171,17 @@
     let logoUrl = null;
     let currentPage = 'home';
 
+    // --- LOADING SPINNER HELPERS ---
+    function showLoader() {
+      document.getElementById('app').innerHTML = `
+        <div class="loader-container">
+          <div class="spinner"></div>
+        </div>
+      `;
+    }
+
+    // --- END LOADING SPINNER HELPERS ---
+
     async function fetchRates() {
       try {
         const res = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
@@ -211,6 +242,7 @@
     }
     function showCart() { document.getElementById('cartSidebar').classList.remove('translate-x-full'); }
     function closeCart() { document.getElementById('cartSidebar').classList.add('translate-x-full'); }
+
     async function whatsappBuy() {
       if (!cart.items.length) return alert('Your cart is empty');
       let msg = "🛍️ *Jinja Order* 🛍️\n";
@@ -221,7 +253,7 @@
         msg += `${idx+1}. ${p.name} x${item.quantity} - ${formatPrice(p.priceGHS * item.quantity)}\n`;
       });
       msg += `\n*Total: ${formatPrice(totalGHS)}*\nLocation: Accra, Ghana`;
-      // Updated WhatsApp number: +233 27 786 9200 -> 233277869200
+      // New WhatsApp number: +233 27 786 9200 -> 233277869200
       window.location.href = `https://wa.me/233277869200?text=${encodeURIComponent(msg)}`;
     }
 
@@ -270,6 +302,7 @@
     }
 
     async function renderHome() {
+      showLoader();
       const data = await fetchProducts(1, 'all', '');
       const allProducts = data.products;
       let productsHtml = '';
@@ -316,8 +349,9 @@
     }
 
     async function renderShop() {
+      showLoader();
       await fetchCategories();
-      document.getElementById('app').innerHTML = `
+      let html = `
         <div class="container mx-auto px-4 py-8">
           <h1 class="text-3xl font-bold mb-6 text-white">All Products</h1>
           <div class="flex flex-wrap gap-4 mb-6">
@@ -328,6 +362,8 @@
           <div id="pagination" class="flex justify-center mt-8 gap-2"></div>
         </div>
       `;
+      document.getElementById('app').innerHTML = html;
+
       const catSelect = document.getElementById('categoryFilter');
       let catHtml = '<option value="all">All Categories</option>';
       categoriesCache.forEach(c => catHtml += `<option value="${c}">${c}</option>`);
@@ -461,7 +497,7 @@
       }
     }
 
-    // Admin trigger: ONLY via #admin in URL (no logo tap, no double-click)
+    // Admin trigger: ONLY via #admin in URL
     function handleAdminTrigger() {
       if (adminToken) {
         showAdminPanel();
