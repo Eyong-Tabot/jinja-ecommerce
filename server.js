@@ -10,6 +10,14 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
+// --- DISABLE CACHING FOR ALL REQUESTS (fixes the incognito issue) ---
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 mongoose.connect(process.env.MONGODB_URI);
 
 // ---------- MODELS ----------
@@ -124,7 +132,6 @@ app.post('/api/admin/login', async (req, res) => {
   res.json({ token });
 });
 
-// Change password (requires auth)
 app.post('/api/admin/change-password', adminAuth, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const admin = await Admin.findById(req.adminId);
