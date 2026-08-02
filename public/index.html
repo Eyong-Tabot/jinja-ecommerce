@@ -7,6 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Force no-cache for this page -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(30px); }
@@ -50,36 +54,6 @@
     }
     .site-footer a:hover {
       color: white;
-    }
-    .admin-link {
-      color: #6B7280;
-      font-size: 0.85rem;
-      margin-left: 10px;
-      cursor: pointer;
-      text-decoration: underline;
-      background: none;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-    .admin-link:hover {
-      color: #D1D5DB;
-      background: #1F2937;
-    }
-    .admin-gear {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      color: #4B5563;
-      font-size: 1.2rem;
-      cursor: pointer;
-      z-index: 999;
-      opacity: 0.4;
-      transition: opacity 0.3s;
-    }
-    .admin-gear:hover {
-      opacity: 1;
-      color: #9CA3AF;
     }
     .desc-toggle-btn {
       color: #0A192F;
@@ -126,22 +100,15 @@
 
   <div id="app" class="pt-20 min-h-screen pb-16"></div>
 
-  <!-- Footer with visible Admin Login link -->
+  <!-- Footer without admin link -->
   <footer class="site-footer">
     <div class="container mx-auto px-4">
       <p>&copy; 2025 Jinja – Room Decor Accra. All rights reserved.</p>
-      <p class="text-sm mt-1">
-        Premium room decoration items from Accra to the world.
-        <button class="admin-link" onclick="handleAdminTrigger()">Admin Login</button>
-      </p>
+      <p class="text-sm mt-1">Premium room decoration items from Accra to the world.</p>
     </div>
   </footer>
 
-  <!-- Small gear icon in bottom-right as extra fallback -->
-  <div class="admin-gear" onclick="handleAdminTrigger()" title="Admin Login">
-    <i class="fas fa-cog"></i>
-  </div>
-
+  <!-- cart sidebar -->
   <div id="cartSidebar" class="fixed top-0 right-0 w-full md:w-96 h-full bg-gray-800 shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col border-l border-gray-700">
     <div class="p-5 flex-1 flex flex-col">
       <div class="flex justify-between items-center mb-4">
@@ -159,6 +126,7 @@
     </div>
   </div>
 
+  <!-- admin modal (same as before) -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -447,13 +415,11 @@
       });
       html += `
           </div>
-          <!-- Logo upload -->
           <div class="mt-8">
             <h3 class="text-xl font-bold mb-2 text-white">Site Logo</h3>
             <input type="file" id="logoUploadAdmin" accept="image/*" class="text-gray-300">
             <button onclick="uploadLogo()" class="mt-2 bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">Upload Logo</button>
           </div>
-          <!-- Password change -->
           <div class="mt-8 border-t border-gray-700 pt-6">
             <h3 class="text-xl font-bold mb-2 text-white">Change Admin Password</h3>
             <div class="max-w-sm">
@@ -504,9 +470,8 @@
       }
     }
 
-    // Admin trigger: double-tap the logo OR footer link OR gear icon
+    // Admin trigger – only called by double‑tap and #admin
     function handleAdminTrigger() {
-      console.log('Admin trigger clicked'); // helps debug
       if (adminToken) {
         showAdminPanel();
       } else {
@@ -609,7 +574,7 @@
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
     }
 
-    // Fallback: #admin in URL
+    // If URL contains #admin, trigger admin login
     if (window.location.hash === '#admin') {
       handleAdminTrigger();
     }
