@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// --- DISABLE CACHING FOR ALL REQUESTS (fixes the incognito issue) ---
+// --- DISABLE CACHING ---
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -194,6 +194,11 @@ app.post('/api/admin/logo', adminAuth, async (req, res) => {
 app.get('/api/settings', async (req, res) => {
   const logo = await Setting.findOne({ key: 'logo' });
   res.json({ logoUrl: logo?.value || null });
+});
+
+// --- PING ENDPOINT FOR UPTIMEROBOT (keeps instance awake) ---
+app.get('/ping', (req, res) => {
+  res.send('pong');
 });
 
 // Serve frontend
