@@ -171,7 +171,6 @@
     let logoUrl = null;
     let currentPage = 'home';
 
-    // --- LOADING SPINNER HELPERS ---
     function showLoader() {
       document.getElementById('app').innerHTML = `
         <div class="loader-container">
@@ -179,8 +178,6 @@
         </div>
       `;
     }
-
-    // --- END LOADING SPINNER HELPERS ---
 
     async function fetchRates() {
       try {
@@ -243,8 +240,22 @@
     function showCart() { document.getElementById('cartSidebar').classList.remove('translate-x-full'); }
     function closeCart() { document.getElementById('cartSidebar').classList.add('translate-x-full'); }
 
+    // --- UPDATED WHATSAPP FUNCTION WITH LOCATION PROMPT ---
     async function whatsappBuy() {
-      if (!cart.items.length) return alert('Your cart is empty');
+      if (!cart.items.length) {
+        alert('Your cart is empty');
+        return;
+      }
+
+      // Ask the user for their location
+      const location = prompt('Please enter your delivery location (e.g., street address, landmark, or area):', '');
+      if (location === null) {
+        // User cancelled
+        return;
+      }
+      // If user leaves it blank, we can still proceed, but we'll include a default
+      const finalLocation = location.trim() || 'Not specified';
+
       let msg = "🛍️ *Jinja Order* 🛍️\n";
       let totalGHS = 0;
       cart.items.forEach((item, idx) => {
@@ -252,9 +263,12 @@
         totalGHS += p.priceGHS * item.quantity;
         msg += `${idx+1}. ${p.name} x${item.quantity} - ${formatPrice(p.priceGHS * item.quantity)}\n`;
       });
-      msg += `\n*Total: ${formatPrice(totalGHS)}*\nLocation: Accra, Ghana`;
-      // New WhatsApp number: +233 27 786 9200 -> 233277869200
-      window.location.href = `https://wa.me/233277869200?text=${encodeURIComponent(msg)}`;
+      msg += `\n*Total: ${formatPrice(totalGHS)}*`;
+      msg += `\n📍 *Location:* ${finalLocation}`;
+      // Optionally, you can include the user's phone number if needed, but WhatsApp already has it.
+
+      const encodedMsg = encodeURIComponent(msg);
+      window.location.href = `https://wa.me/233277869200?text=${encodedMsg}`;
     }
 
     function toggleCurrencyDropdown() { document.getElementById('currencyDropdown').classList.toggle('hidden'); }
