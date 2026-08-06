@@ -4,6 +4,9 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 app.use(cors());
@@ -18,6 +21,25 @@ app.use((req, res, next) => {
   next();
 });
 
+// --- CLOUDINARY CONFIG ---
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Multer storage for Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'jinja_products',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 800, height: 800, crop: 'limit' }]
+  }
+});
+const upload = multer({ storage });
+
+// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI);
 
 // ---------- MODELS ----------
@@ -26,7 +48,7 @@ const productSchema = new mongoose.Schema({
   description: String,
   priceGHS: Number,
   category: String,
-  images: [String],
+  images: [String], // Cloudinary URLs
   inStock: Boolean,
   stockQuantity: Number,
   createdAt: Date
@@ -67,7 +89,7 @@ const adminAuth = (req, res, next) => {
 // ---------- PUBLIC ROUTES ----------
 app.get('/api/products', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = 12;
+  const limit = parseInt(req.query.limit) || 6;
   const query = {};
   if (req.query.category && req.query.category !== 'all') query.category = req.query.category;
   if (req.query.search) query.name = { $regex: req.query.search, $options: 'i' };
@@ -123,7 +145,7 @@ app.delete('/api/cart/:cartId', async (req, res) => {
   res.json({ message: 'cleared' });
 });
 
-// ---------- ADMIN ROUTES ----------
+// ---------- ADMIN ROUTES (with Cloudinary) ----------
 app.post('/api/admin/login', async (req, res) => {
   const admin = await Admin.findOne({ email: req.body.email });
   if (!admin || !(await bcrypt.compare(req.body.password, admin.password)))
@@ -145,32 +167,41 @@ app.post('/api/admin/change-password', adminAuth, async (req, res) => {
 
 app.get('/api/admin/verify', adminAuth, (req, res) => res.json({ valid: true }));
 
-app.post('/api/admin/products', adminAuth, async (req, res) => {
-  const { name, description, priceGHS, category, images, inStock, stockQuantity } = req.body;
+// Add product – upload images to Cloudinary
+app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req, res) => {
+  const images = req.files.map(file => file.path); // Cloudinary URLs
   const product = new Product({
-    name, description,
-    priceGHS: parseFloat(priceGHS),
-    category,
-    images: images || [],
-    inStock: inStock === true || inStock === 'true',
-    stockQuantity: parseInt(stockQuantity) || 999,
+    name: req.body.name,
+    description: req.body.description,
+    priceGHS: parseFloat(req.body.priceGHS),
+    category: req.body.category,
+    images: images,
+    inStock: req.body.inStock === 'true',
+    stockQuantity: parseInt(req.body.stockQuantity) || 999,
     createdAt: new Date()
   });
   await product.save();
   res.json(product);
 });
 
-app.put('/api/admin/products/:id', adminAuth, async (req, res) => {
-  const { name, description, priceGHS, category, images, inStock, stockQuantity } = req.body;
+// Edit product – handle existing images + new uploads
+app.put('/api/admin/products/:id', adminAuth, upload.array('images', 5), async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(404).json({ error: 'Product not found' });
-  product.name = name;
-  product.description = description;
-  product.priceGHS = parseFloat(priceGHS);
-  product.category = category;
-  product.images = images || [];
-  product.inStock = inStock === true || inStock === 'true';
-  product.stockQuantity = parseInt(stockQuantity) || 999;
+  
+  let images = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
+  if (req.files) {
+    const newImages = req.files.map(file => file.path);
+    images = images.concat(newImages);
+  }
+  
+  product.name = req.body.name;
+  product.description = req.body.description;
+  product.priceGHS = parseFloat(req.body.priceGHS);
+  product.category = req.body.category;
+  product.images = images;
+  product.inStock = req.body.inStock === 'true';
+  product.stockQuantity = parseInt(req.body.stockQuantity) || 999;
   await product.save();
   res.json(product);
 });
@@ -185,10 +216,12 @@ app.get('/api/admin/products', adminAuth, async (req, res) => {
   res.json(products);
 });
 
-app.post('/api/admin/logo', adminAuth, async (req, res) => {
-  const { logoBase64 } = req.body;
-  await Setting.findOneAndUpdate({ key: 'logo' }, { key: 'logo', value: logoBase64 }, { upsert: true });
-  res.json({ logoUrl: logoBase64 });
+// Logo upload – Cloudinary
+app.post('/api/admin/logo', adminAuth, upload.single('logo'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const logoUrl = req.file.path;
+  await Setting.findOneAndUpdate({ key: 'logo' }, { key: 'logo', value: logoUrl }, { upsert: true });
+  res.json({ logoUrl });
 });
 
 app.get('/api/settings', async (req, res) => {
@@ -196,7 +229,7 @@ app.get('/api/settings', async (req, res) => {
   res.json({ logoUrl: logo?.value || null });
 });
 
-// --- PING ENDPOINT FOR UPTIMEROBOT (keeps instance awake) ---
+// Ping endpoint for uptime
 app.get('/ping', (req, res) => {
   res.send('pong');
 });
@@ -206,7 +239,7 @@ app.get('*', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Create default admin if none exists
+// Create default admin
 const init = async () => {
   const exists = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
   if (!exists) await Admin.create({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD });
