@@ -35,9 +35,7 @@
     @media (min-width: 768px) {
       .price-badge { font-size: 1.1rem; padding: 8px 14px; }
     }
-    body {
-      background-color: #111827;
-    }
+    body { background-color: #111827; }
     .site-footer {
       background-color: #0A192F;
       color: #9CA3AF;
@@ -57,11 +55,7 @@
       border: none;
       padding: 0;
     }
-    .desc-toggle-btn:hover {
-      color: #1A2F4F;
-    }
-
-    /* LOADING SPINNER */
+    .desc-toggle-btn:hover { color: #1A2F4F; }
     .loader-container {
       display: flex;
       justify-content: center;
@@ -86,7 +80,6 @@
 
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <!-- Logo: purely visual (no click handler) -->
       <div class="text-3xl md:text-4xl font-bold flex items-center">
         <span id="logoText" class="bg-gradient-to-r from-[#0A192F] to-white bg-clip-text text-transparent">Jinja</span>
         <img id="logoImg" class="h-14 md:h-16 hidden object-contain" alt="Jinja Logo">
@@ -144,7 +137,7 @@
         <h2 class="text-2xl font-bold text-white" id="modalTitle">Add Product</h2>
         <button onclick="closeAdminModal()" class="text-2xl text-gray-300 hover:text-white">&times;</button>
       </div>
-      <form id="productForm">
+      <form id="productForm" enctype="multipart/form-data">
         <input type="text" id="prodName" placeholder="Product name" class="w-full mb-3 p-3 bg-gray-900 rounded border border-gray-600 text-white" required>
         <textarea id="prodDesc" placeholder="Description" rows="3" class="w-full mb-3 p-3 bg-gray-900 rounded border border-gray-600 text-white" required></textarea>
         <input type="number" step="0.01" id="prodPrice" placeholder="Price (GHS)" class="w-full mb-3 p-3 bg-gray-900 rounded border border-gray-600 text-white" required>
@@ -153,8 +146,12 @@
           <option>Rugs</option><option>Mirrors</option><option>Plants</option><option>Other</option>
         </select>
         <label class="flex items-center mb-3 text-gray-200"><input type="checkbox" id="prodInStock" checked class="mr-2"> In Stock</label>
-        <div id="existingImagesContainer" class="flex flex-wrap gap-2 mb-3"></div>
+
+        <!-- Image upload (multiple) – will go to Cloudinary -->
         <input type="file" id="prodImages" multiple accept="image/*" class="mb-3 text-gray-300">
+
+        <!-- Show existing images -->
+        <div id="existingImagesContainer" class="flex flex-wrap gap-2 mb-3"></div>
         <button type="submit" class="w-full bg-[#0A192F] hover:bg-[#0A192F]/80 py-3 rounded-lg font-semibold text-white transition">Save Product</button>
       </form>
     </div>
@@ -240,22 +237,14 @@
     function showCart() { document.getElementById('cartSidebar').classList.remove('translate-x-full'); }
     function closeCart() { document.getElementById('cartSidebar').classList.add('translate-x-full'); }
 
-    // --- UPDATED WHATSAPP FUNCTION WITH LOCATION PROMPT ---
     async function whatsappBuy() {
       if (!cart.items.length) {
         alert('Your cart is empty');
         return;
       }
-
-      // Ask the user for their location
       const location = prompt('Please enter your delivery location (e.g., street address, landmark, or area):', '');
-      if (location === null) {
-        // User cancelled
-        return;
-      }
-      // If user leaves it blank, we can still proceed, but we'll include a default
+      if (location === null) return;
       const finalLocation = location.trim() || 'Not specified';
-
       let msg = "🛍️ *Jinja Order* 🛍️\n";
       let totalGHS = 0;
       cart.items.forEach((item, idx) => {
@@ -265,8 +254,6 @@
       });
       msg += `\n*Total: ${formatPrice(totalGHS)}*`;
       msg += `\n📍 *Location:* ${finalLocation}`;
-      // Optionally, you can include the user's phone number if needed, but WhatsApp already has it.
-
       const encodedMsg = encodeURIComponent(msg);
       window.location.href = `https://wa.me/233277869200?text=${encodedMsg}`;
     }
@@ -290,7 +277,7 @@
     let categoriesCache = [];
 
     async function fetchProducts(page = 1, category = 'all', search = '') {
-      const url = `${API_URL}/products?page=${page}&category=${category}&search=${search}`;
+      const url = `${API_URL}/products?page=${page}&limit=6&category=${category}&search=${search}`;
       const res = await axios.get(url);
       productsCache = res.data.products;
       return res.data;
@@ -392,7 +379,7 @@
       currentFilters.page = page;
       currentFilters.category = document.getElementById('categoryFilter')?.value || 'all';
       currentFilters.search = document.getElementById('searchInput')?.value || '';
-      const res = await axios.get(`${API_URL}/products?page=${page}&category=${currentFilters.category}&search=${currentFilters.search}`);
+      const res = await axios.get(`${API_URL}/products?page=${page}&limit=6&category=${currentFilters.category}&search=${currentFilters.search}`);
       const products = res.data.products;
       currentFilters.totalPages = res.data.totalPages;
       const grid = document.getElementById('productsGrid');
@@ -435,10 +422,7 @@
     }
 
     async function showAdminPanel() {
-      if (!adminToken) {
-        showAdminLogin();
-        return;
-      }
+      if (!adminToken) { showAdminLogin(); return; }
       const res = await axios.get(`${API_URL}/admin/products`, { headers: { Authorization: `Bearer ${adminToken}` } });
       const products = res.data;
       let html = `
@@ -511,14 +495,43 @@
       }
     }
 
-    // Admin trigger: ONLY via #admin in URL
     function handleAdminTrigger() {
-      if (adminToken) {
-        showAdminPanel();
-      } else {
-        showAdminLogin();
-      }
+      if (adminToken) showAdminPanel();
+      else showAdminLogin();
     }
+
+    // Product form handler (uses Cloudinary via backend)
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append('name', document.getElementById('prodName').value);
+      formData.append('description', document.getElementById('prodDesc').value);
+      formData.append('priceGHS', document.getElementById('prodPrice').value);
+      formData.append('category', document.getElementById('prodCategory').value);
+      formData.append('inStock', document.getElementById('prodInStock').checked);
+      formData.append('stockQuantity', 999);
+
+      // Append existing images (if any) as JSON string
+      if (window.existingImages) {
+        formData.append('existingImages', JSON.stringify(window.existingImages));
+      }
+
+      // Append new image files
+      const files = document.getElementById('prodImages').files;
+      for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+      }
+
+      const url = window.editingProductId ? `${API_URL}/admin/products/${window.editingProductId}` : `${API_URL}/admin/products`;
+      const method = window.editingProductId ? 'put' : 'post';
+      await axios[method](url, formData, {
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'multipart/form-data' }
+      });
+      closeAdminModal();
+      showAdminPanel();
+      if (currentPage === 'home') renderHome();
+      else if (currentPage === 'shop') renderShop();
+    });
 
     function openProductModal(productId = null) {
       window.editingProductId = productId;
@@ -543,42 +556,9 @@
       } else { window.existingImages = []; }
       document.getElementById('adminModal').classList.remove('hidden');
     }
+
     function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); window.editingProductId = null; }
     function removeTempImage(idx) { window.existingImages.splice(idx,1); openProductModal(window.editingProductId); }
-
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-      });
-    }
-
-    document.getElementById('productForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('prodName').value;
-      const description = document.getElementById('prodDesc').value;
-      const priceGHS = parseFloat(document.getElementById('prodPrice').value);
-      const category = document.getElementById('prodCategory').value;
-      const inStock = document.getElementById('prodInStock').checked;
-      let images = window.existingImages || [];
-      const files = document.getElementById('prodImages').files;
-      if (files.length > 0) {
-        for (let i = 0; i < files.length; i++) {
-          const base64 = await fileToBase64(files[i]);
-          images.push(base64);
-        }
-      }
-      const productData = { name, description, priceGHS, category, inStock, images, stockQuantity: 999 };
-      const url = window.editingProductId ? `${API_URL}/admin/products/${window.editingProductId}` : `${API_URL}/admin/products`;
-      const method = window.editingProductId ? 'put' : 'post';
-      await axios[method](url, productData, { headers: { Authorization: `Bearer ${adminToken}` } });
-      closeAdminModal();
-      showAdminPanel();
-      if (currentPage === 'home') renderHome();
-      else if (currentPage === 'shop') renderShop();
-    });
 
     async function deleteProduct(id) {
       if (!confirm('Delete product?')) return;
@@ -593,8 +573,11 @@
       const fileInput = document.getElementById('logoUploadAdmin');
       const file = fileInput.files[0];
       if (!file) { alert('Please select a logo file first'); return; }
-      const base64 = await fileToBase64(file);
-      await axios.post(`${API_URL}/admin/logo`, { logoBase64: base64 }, { headers: { Authorization: `Bearer ${adminToken}` } });
+      const formData = new FormData();
+      formData.append('logo', file);
+      await axios.post(`${API_URL}/admin/logo`, formData, {
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'multipart/form-data' }
+      });
       alert('Logo updated');
       fetchSettings();
     }
@@ -615,7 +598,6 @@
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
     }
 
-    // ONLY admin trigger: #admin in URL
     if (window.location.hash === '#admin') {
       handleAdminTrigger();
     }
