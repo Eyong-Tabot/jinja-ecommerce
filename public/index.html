@@ -147,7 +147,9 @@
         </select>
         <label class="flex items-center mb-3 text-gray-200"><input type="checkbox" id="prodInStock" checked class="mr-2"> In Stock</label>
 
-        <input type="file" id="prodImages" multiple accept="image/*" class="mb-3 text-gray-300">
+        <!-- Image upload – at least one image required -->
+        <div class="text-gray-300 mb-2">Upload product image(s) (at least one):</div>
+        <input type="file" id="prodImages" multiple accept="image/*" class="mb-3 text-gray-300" required>
 
         <div id="existingImagesContainer" class="flex flex-wrap gap-2 mb-3"></div>
         <button type="submit" class="w-full bg-[#0A192F] hover:bg-[#0A192F]/80 py-3 rounded-lg font-semibold text-white transition">Save Product</button>
@@ -468,9 +470,17 @@
       else showAdminLogin();
     }
 
-    // Product form handler
+    // Product form handler with error handling
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // Require at least one image
+      const files = document.getElementById('prodImages').files;
+      if (files.length === 0 && !window.existingImages?.length) {
+        alert('Please upload at least one product image.');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('name', document.getElementById('prodName').value);
       formData.append('description', document.getElementById('prodDesc').value);
@@ -483,20 +493,27 @@
         formData.append('existingImages', JSON.stringify(window.existingImages));
       }
 
-      const files = document.getElementById('prodImages').files;
       for (let i = 0; i < files.length; i++) {
         formData.append('images', files[i]);
       }
 
       const url = window.editingProductId ? `${API_URL}/admin/products/${window.editingProductId}` : `${API_URL}/admin/products`;
       const method = window.editingProductId ? 'put' : 'post';
-      await axios[method](url, formData, {
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'multipart/form-data' }
-      });
-      closeAdminModal();
-      showAdminPanel();
-      if (currentPage === 'home') renderHome();
-      else if (currentPage === 'shop') renderShop();
+
+      try {
+        const response = await axios[method](url, formData, {
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'multipart/form-data' }
+        });
+        alert('Product saved successfully!');
+        closeAdminModal();
+        showAdminPanel();
+        if (currentPage === 'home') renderHome();
+        else if (currentPage === 'shop') renderShop();
+      } catch (error) {
+        console.error('Save error:', error);
+        const msg = error.response?.data?.error || error.message || 'Unknown error';
+        alert('Failed to save product: ' + msg);
+      }
     });
 
     function openProductModal(productId = null) {
@@ -541,11 +558,15 @@
       if (!file) { alert('Please select a logo file first'); return; }
       const formData = new FormData();
       formData.append('logo', file);
-      await axios.post(`${API_URL}/admin/logo`, formData, {
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'multipart/form-data' }
-      });
-      alert('Logo updated');
-      fetchSettings();
+      try {
+        await axios.post(`${API_URL}/admin/logo`, formData, {
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'multipart/form-data' }
+        });
+        alert('Logo updated');
+        fetchSettings();
+      } catch (error) {
+        alert('Logo upload failed: ' + (error.response?.data?.error || error.message));
+      }
     }
 
     async function fetchSettings() {
