@@ -147,7 +147,6 @@
         </select>
         <label class="flex items-center mb-3 text-gray-200"><input type="checkbox" id="prodInStock" checked class="mr-2"> In Stock</label>
 
-        <!-- Image upload – at least one image required -->
         <div class="text-gray-300 mb-2">Upload product image(s) (at least one):</div>
         <input type="file" id="prodImages" multiple accept="image/*" class="mb-3 text-gray-300" required>
 
@@ -470,11 +469,10 @@
       else showAdminLogin();
     }
 
-    // Product form handler with error handling
+    // Product form – base64 (files are sent as multipart, backend converts)
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      // Require at least one image
+
       const files = document.getElementById('prodImages').files;
       if (files.length === 0 && !window.existingImages?.length) {
         alert('Please upload at least one product image.');
