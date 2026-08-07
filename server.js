@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// --- DISABLE CACHING ---
+// Disable caching
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -21,14 +21,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- CLOUDINARY CONFIG ---
+// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Multer storage for Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -48,7 +47,7 @@ const productSchema = new mongoose.Schema({
   description: String,
   priceGHS: Number,
   category: String,
-  images: [String], // Cloudinary URLs
+  images: [String],
   inStock: Boolean,
   stockQuantity: Number,
   createdAt: Date
@@ -145,31 +144,24 @@ app.delete('/api/cart/:cartId', async (req, res) => {
   res.json({ message: 'cleared' });
 });
 
-// ---------- ADMIN ROUTES (with Cloudinary) ----------
+// ---------- ADMIN ROUTES ----------
+// Login: email only (no password)
 app.post('/api/admin/login', async (req, res) => {
-  const admin = await Admin.findOne({ email: req.body.email });
-  if (!admin || !(await bcrypt.compare(req.body.password, admin.password)))
-    return res.status(401).json({ error: 'Invalid credentials' });
+  const { email } = req.body;
+  const admin = await Admin.findOne({ email });
+  if (!admin) {
+    return res.status(401).json({ error: 'Invalid email' });
+  }
+  // No password check – email is enough
   const token = jwt.sign({ id: admin._id, email: admin.email, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '7d' });
   res.json({ token });
-});
-
-app.post('/api/admin/change-password', adminAuth, async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  const admin = await Admin.findById(req.adminId);
-  if (!admin) return res.status(404).json({ error: 'Admin not found' });
-  if (!(await bcrypt.compare(oldPassword, admin.password)))
-    return res.status(401).json({ error: 'Current password is incorrect' });
-  admin.password = newPassword;
-  await admin.save();
-  res.json({ message: 'Password updated successfully' });
 });
 
 app.get('/api/admin/verify', adminAuth, (req, res) => res.json({ valid: true }));
 
 // Add product – upload images to Cloudinary
 app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req, res) => {
-  const images = req.files.map(file => file.path); // Cloudinary URLs
+  const images = req.files.map(file => file.path);
   const product = new Product({
     name: req.body.name,
     description: req.body.description,
@@ -239,10 +231,12 @@ app.get('*', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Create default admin
+// Create default admin if none exists (password is set but not used)
 const init = async () => {
   const exists = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
-  if (!exists) await Admin.create({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD });
+  if (!exists) {
+    await Admin.create({ email: process.env.ADMIN_EMAIL, password: Math.random().toString(36) });
+  }
 };
 init();
 
