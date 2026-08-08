@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 app.use(cors());
@@ -18,8 +20,32 @@ app.use((req, res, next) => {
   next();
 });
 
-// Memory storage for base64 conversion
-const storage = multer.memoryStorage();
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// If credentials are missing, log a warning but continue (fallback will handle it)
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+  console.warn('⚠️ Cloudinary credentials missing – images will be stored as base64.');
+}
+
+let storage;
+try {
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'jinja_products',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+      transformation: [{ width: 800, height: 800, crop: 'limit' }]
+    }
+  });
+} catch (err) {
+  console.warn('Cloudinary storage error, using memory storage fallback.', err);
+  storage = multer.memoryStorage();
+}
 const upload = multer({ storage });
 
 mongoose.connect(process.env.MONGODB_URI);
@@ -30,7 +56,7 @@ const productSchema = new mongoose.Schema({
   description: String,
   priceGHS: Number,
   category: String,
-  images: [String], // base64 strings
+  images: [String],
   inStock: Boolean,
   stockQuantity: Number,
   createdAt: Date
@@ -56,7 +82,6 @@ const Admin = mongoose.model('Admin', adminSchema);
 const settingSchema = new mongoose.Schema({ key: String, value: mongoose.Schema.Types.Mixed });
 const Setting = mongoose.model('Setting', settingSchema);
 
-// Auth middleware
 const adminAuth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -71,7 +96,7 @@ const adminAuth = (req, res, next) => {
 // ---------- PUBLIC ROUTES ----------
 app.get('/api/products', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 6;
+  const limit = parseInt(req.query.limit) || 20;
   const query = {};
   if (req.query.category && req.query.category !== 'all') query.category = req.query.category;
   if (req.query.search) query.name = { $regex: req.query.search, $options: 'i' };
@@ -85,7 +110,7 @@ app.get('/api/categories', async (req, res) => {
   res.json(cats);
 });
 
-// Cart routes
+// Cart routes (unchanged)
 app.get('/api/cart/:cartId', async (req, res) => {
   let cart = await Cart.findOne({ cartId: req.params.cartId }).populate('items.productId');
   if (!cart) cart = new Cart({ cartId: req.params.cartId, items: [] });
@@ -138,17 +163,46 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.get('/api/admin/verify', adminAuth, (req, res) => res.json({ valid: true }));
 
-// Add product – base64 images
+// Helper to upload a single image to Cloudinary, with fallback to base64
+async function uploadImage(buffer, mimetype, originalname) {
+  try {
+    // If Cloudinary storage is used (disk storage), we'd have file.path; but with memory storage, we use buffer.
+    // Use promise-based upload stream.
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'jinja_products', public_id: `${Date.now()}_${originalname}` },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result.secure_url);
+        }
+      );
+      uploadStream.end(buffer);
+    });
+  } catch (error) {
+    console.error('Cloudinary upload failed for', originalname, error);
+    // Fallback: base64
+    const base64 = buffer.toString('base64');
+    return `data:${mimetype};base64,${base64}`;
+  }
+}
+
+// Add product – with Cloudinary fallback
 app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req, res) => {
   try {
-    let images = [];
+    let imageUrls = [];
     if (req.files && req.files.length > 0) {
-      images = req.files.map(file => {
-        const base64 = file.buffer.toString('base64');
-        return `data:${file.mimetype};base64,${base64}`;
-      });
+      // Check if files have path (Cloudinary storage) or buffer (memory storage)
+      if (req.files[0].path) {
+        // Cloudinary storage already gave us URLs (multer-storage-cloudinary)
+        imageUrls = req.files.map(file => file.path);
+      } else {
+        // Memory storage – upload each to Cloudinary manually
+        const uploadPromises = req.files.map(file => uploadImage(file.buffer, file.mimetype, file.originalname));
+        imageUrls = await Promise.all(uploadPromises);
+      }
     } else {
-      images = ['https://via.placeholder.com/400x400/0A192F/FFFFFF?text=Jinja'];
+      // No image – placeholder
+      imageUrls = ['https://via.placeholder.com/400x400/0A192F/FFFFFF?text=Jinja'];
     }
 
     const product = new Product({
@@ -156,7 +210,7 @@ app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req
       description: req.body.description,
       priceGHS: parseFloat(req.body.priceGHS),
       category: req.body.category,
-      images: images,
+      images: imageUrls,
       inStock: req.body.inStock === 'true',
       stockQuantity: parseInt(req.body.stockQuantity) || 999,
       createdAt: new Date()
@@ -169,7 +223,7 @@ app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req
   }
 });
 
-// Edit product – base64
+// Edit product – similar
 app.put('/api/admin/products/:id', adminAuth, upload.array('images', 5), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -177,11 +231,14 @@ app.put('/api/admin/products/:id', adminAuth, upload.array('images', 5), async (
 
     let images = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => {
-        const base64 = file.buffer.toString('base64');
-        return `data:${file.mimetype};base64,${base64}`;
-      });
-      images = images.concat(newImages);
+      let newImageUrls;
+      if (req.files[0].path) {
+        newImageUrls = req.files.map(file => file.path);
+      } else {
+        const uploadPromises = req.files.map(file => uploadImage(file.buffer, file.mimetype, file.originalname));
+        newImageUrls = await Promise.all(uploadPromises);
+      }
+      images = images.concat(newImageUrls);
     }
 
     product.name = req.body.name;
@@ -209,12 +266,33 @@ app.get('/api/admin/products', adminAuth, async (req, res) => {
   res.json(products);
 });
 
-// Logo upload – base64
+// Logo upload – Cloudinary with fallback
 app.post('/api/admin/logo', adminAuth, upload.single('logo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const base64 = req.file.buffer.toString('base64');
-    const logoUrl = `data:${req.file.mimetype};base64,${base64}`;
+    let logoUrl;
+    if (req.file.path) {
+      logoUrl = req.file.path;
+    } else {
+      // Memory storage – upload to Cloudinary manually
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'jinja_logos' },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            }
+          );
+          uploadStream.end(req.file.buffer);
+        });
+        logoUrl = result.secure_url;
+      } catch (cloudErr) {
+        console.error('Cloudinary logo upload failed, using base64:', cloudErr);
+        const base64 = req.file.buffer.toString('base64');
+        logoUrl = `data:${req.file.mimetype};base64,${base64}`;
+      }
+    }
     await Setting.findOneAndUpdate({ key: 'logo' }, { key: 'logo', value: logoUrl }, { upsert: true });
     res.json({ logoUrl });
   } catch (error) {
@@ -231,12 +309,10 @@ app.get('/api/settings', async (req, res) => {
 // Ping
 app.get('/ping', (req, res) => res.send('pong'));
 
-// Serve frontend
 app.get('*', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Create default admin
 const init = async () => {
   const exists = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
   if (!exists) {
