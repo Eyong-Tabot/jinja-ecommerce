@@ -414,7 +414,6 @@
 
   <div id="app" class="pt-16 min-h-screen"></div>
 
-  <!-- FOOTER - Updated to Kumasi -->
   <footer class="site-footer" id="contact">
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
@@ -680,7 +679,6 @@
         alert('Your cart is empty');
         return;
       }
-      // Prompt includes "Kumasi campus" as example
       const location = prompt('Please enter your delivery location (e.g., Kumasi campus, address, landmark):', '');
       if (location === null) return;
       const finalLocation = location.trim() || 'Not specified';
@@ -741,13 +739,12 @@
           <div class="trust-badge"><i class="fab fa-whatsapp"></i> WhatsApp Support</div>
         </div>
 
-        <!-- Delivery Information -->
+        <!-- UPDATED DELIVERY SECTION -->
         <div id="delivery" class="container mx-auto px-4 py-6">
           <div class="delivery-card max-w-2xl mx-auto">
             <h4 class="text-white font-bold mb-2">🚚 Delivery Information</h4>
             <div class="grid grid-cols-2 gap-3 text-sm">
-              <div><span class="text-gray-400">Campus Delivery:</span> <span class="text-white font-semibold">₵10</span></div>
-              <div><span class="text-gray-400">Free Delivery:</span> <span class="text-white font-semibold">Orders over ₵200</span></div>
+              <div><span class="text-gray-400">Campus Delivery:</span> <span class="text-white font-semibold">₵10 (free on orders over ₵200)</span></div>
               <div><span class="text-gray-400">Kumasi Delivery:</span> <span class="text-white font-semibold">Contact Us</span></div>
               <div><span class="text-gray-400">Outside Kumasi:</span> <span class="text-white font-semibold">Contact Us</span></div>
             </div>
