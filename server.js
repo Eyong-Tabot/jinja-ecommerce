@@ -27,7 +27,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// If credentials are missing, log a warning but continue (fallback will handle it)
 if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
   console.warn('⚠️ Cloudinary credentials missing – images will be stored as base64.');
 }
@@ -110,7 +109,7 @@ app.get('/api/categories', async (req, res) => {
   res.json(cats);
 });
 
-// Cart routes (unchanged)
+// Cart routes
 app.get('/api/cart/:cartId', async (req, res) => {
   let cart = await Cart.findOne({ cartId: req.params.cartId }).populate('items.productId');
   if (!cart) cart = new Cart({ cartId: req.params.cartId, items: [] });
@@ -163,11 +162,9 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.get('/api/admin/verify', adminAuth, (req, res) => res.json({ valid: true }));
 
-// Helper to upload a single image to Cloudinary, with fallback to base64
+// Helper to upload a single image to Cloudinary (fallback to base64)
 async function uploadImage(buffer, mimetype, originalname) {
   try {
-    // If Cloudinary storage is used (disk storage), we'd have file.path; but with memory storage, we use buffer.
-    // Use promise-based upload stream.
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder: 'jinja_products', public_id: `${Date.now()}_${originalname}` },
@@ -180,7 +177,6 @@ async function uploadImage(buffer, mimetype, originalname) {
     });
   } catch (error) {
     console.error('Cloudinary upload failed for', originalname, error);
-    // Fallback: base64
     const base64 = buffer.toString('base64');
     return `data:${mimetype};base64,${base64}`;
   }
@@ -191,17 +187,13 @@ app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req
   try {
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
-      // Check if files have path (Cloudinary storage) or buffer (memory storage)
       if (req.files[0].path) {
-        // Cloudinary storage already gave us URLs (multer-storage-cloudinary)
         imageUrls = req.files.map(file => file.path);
       } else {
-        // Memory storage – upload each to Cloudinary manually
         const uploadPromises = req.files.map(file => uploadImage(file.buffer, file.mimetype, file.originalname));
         imageUrls = await Promise.all(uploadPromises);
       }
     } else {
-      // No image – placeholder
       imageUrls = ['https://via.placeholder.com/400x400/0A192F/FFFFFF?text=Jinja'];
     }
 
@@ -223,7 +215,7 @@ app.post('/api/admin/products', adminAuth, upload.array('images', 5), async (req
   }
 });
 
-// Edit product – similar
+// Edit product
 app.put('/api/admin/products/:id', adminAuth, upload.array('images', 5), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -266,7 +258,7 @@ app.get('/api/admin/products', adminAuth, async (req, res) => {
   res.json(products);
 });
 
-// Logo upload – Cloudinary with fallback
+// Logo upload
 app.post('/api/admin/logo', adminAuth, upload.single('logo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -274,7 +266,6 @@ app.post('/api/admin/logo', adminAuth, upload.single('logo'), async (req, res) =
     if (req.file.path) {
       logoUrl = req.file.path;
     } else {
-      // Memory storage – upload to Cloudinary manually
       try {
         const result = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
@@ -305,6 +296,92 @@ app.get('/api/settings', async (req, res) => {
   const logo = await Setting.findOne({ key: 'logo' });
   res.json({ logoUrl: logo?.value || null });
 });
+
+// ============================================
+// 🚀 TEMPORARY MIGRATION ROUTE
+// Visit https://your-app.onrender.com/migrate
+// REMOVE THIS ROUTE AFTER RUNNING IT ONCE!
+// ============================================
+app.get('/migrate', async (req, res) => {
+  try {
+    console.log('🔍 Starting migration...');
+    const products = await Product.find({});
+    console.log(`✅ Found ${products.length} products.`);
+
+    let converted = 0;
+    let total = 0;
+
+    for (const product of products) {
+      let updated = false;
+      const newImages = [];
+
+      for (const image of product.images) {
+        total++;
+        // Skip if already Cloudinary URL
+        if (image.startsWith('https://res.cloudinary.com/') || image.startsWith('http://res.cloudinary.com/')) {
+          newImages.push(image);
+          continue;
+        }
+
+        // Check if base64
+        if (image.startsWith('data:image/') || image.startsWith('data:application/')) {
+          try {
+            const base64Data = image.split('base64,')[1];
+            if (!base64Data) {
+              newImages.push(image);
+              continue;
+            }
+            console.log(`  📤 Uploading image for "${product.name}"...`);
+            const result = await new Promise((resolve, reject) => {
+              const uploadStream = cloudinary.uploader.upload_stream(
+                { folder: 'jinja_products', public_id: `${Date.now()}_${product.name.substring(0, 20)}` },
+                (error, result) => {
+                  if (error) reject(error);
+                  else resolve(result);
+                }
+              );
+              uploadStream.end(Buffer.from(base64Data, 'base64'));
+            });
+            newImages.push(result.secure_url);
+            converted++;
+            updated = true;
+            console.log(`  ✅ Uploaded successfully`);
+          } catch (error) {
+            console.error(`  ❌ Failed to upload image for "${product.name}":`, error.message);
+            newImages.push(image);
+          }
+        } else {
+          newImages.push(image);
+        }
+      }
+
+      if (updated) {
+        product.images = newImages;
+        await product.save();
+        console.log(`  💾 Saved product: ${product.name}`);
+      }
+    }
+
+    console.log(`\n🎉 Migration complete!`);
+    console.log(`   ✅ Converted: ${converted} images`);
+    console.log(`   📦 Total processed: ${total} images`);
+    console.log(`   📦 Products: ${products.length}`);
+
+    res.send(`
+      <h1>✅ Migration Complete!</h1>
+      <p>Converted <strong>${converted}</strong> images to Cloudinary.</p>
+      <p>Total images processed: <strong>${total}</strong></p>
+      <p>Products updated: <strong>${products.length}</strong></p>
+      <p>⚠️ <strong>REMOVE THIS MIGRATION ROUTE</strong> from server.js now!</p>
+    `);
+  } catch (error) {
+    console.error('Migration failed:', error);
+    res.status(500).send('❌ Migration failed: ' + error.message);
+  }
+});
+// ============================================
+// END OF MIGRATION ROUTE
+// ============================================
 
 // Ping
 app.get('/ping', (req, res) => res.send('pong'));
