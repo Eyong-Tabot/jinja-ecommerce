@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Jinja – Room Decor Accra</title>
+  <title>Jinja – Room Decor Kumasi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -67,7 +67,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Floating WhatsApp */
     .whatsapp-float {
       position: fixed;
       bottom: 20px;
@@ -117,7 +116,6 @@
       border: 1px solid #374151;
     }
 
-    /* Product card - larger, all text white */
     .product-card {
       background: #1F2937;
       border: 1px solid #374151;
@@ -131,7 +129,7 @@
       box-shadow: 0 12px 30px rgba(0,0,0,0.3);
     }
     .product-card .product-image {
-      height: 260px; /* increased from 200px */
+      height: 260px;
       width: 100%;
       object-fit: cover;
     }
@@ -141,18 +139,18 @@
     .product-card .product-name {
       font-weight: 600;
       font-size: 1.1rem;
-      color: white; /* white */
+      color: white;
       margin-bottom: 2px;
     }
     .product-card .product-price {
       font-weight: 700;
       font-size: 1.3rem;
-      color: white; /* changed from navy to white */
+      color: white;
       margin-bottom: 6px;
     }
     .product-card .product-desc {
       font-size: 0.85rem;
-      color: white; /* white */
+      color: white;
       margin-bottom: 10px;
       line-height: 1.4;
       display: -webkit-box;
@@ -164,7 +162,7 @@
       width: 100%;
       background: #0A192F;
       color: white;
-      padding: 10px 0; /* slightly taller */
+      padding: 10px 0;
       border-radius: 8px;
       font-weight: 600;
       font-size: 1rem;
@@ -175,7 +173,6 @@
     .product-card .add-to-cart-btn:hover { background: #1a2a4f; transform: scale(1.02); }
     .product-card .add-to-cart-btn.added { background: #059669; }
 
-    /* Hero */
     .hero-section {
       background: linear-gradient(135deg, #0A192F 0%, #1a2a4a 50%, #0A192F 100%);
       padding: 60px 20px 50px;
@@ -201,7 +198,7 @@
       .hero-section h1 { font-size: 1.6rem; }
       .hero-section p { font-size: 0.95rem; }
       .whatsapp-float { width: 50px; height: 50px; font-size: 24px; bottom: 15px; right: 15px; }
-      .product-card .product-image { height: 200px; } /* slightly smaller on mobile but still larger than before */
+      .product-card .product-image { height: 200px; }
     }
 
     .cart-badge {
@@ -214,7 +211,6 @@
       text-align: center;
     }
 
-    /* Toast */
     .toast {
       position: fixed;
       bottom: 80px;
@@ -238,7 +234,6 @@
     }
     .toast i { margin-right: 8px; color: #22c55e; }
 
-    /* Product Detail Modal (for customers) */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -282,7 +277,7 @@
     .modal-product-price {
       font-size: 1.4rem;
       font-weight: 700;
-      color: white; /* changed to white */
+      color: white;
       margin: 8px 0 12px;
     }
     .modal-product-desc {
@@ -351,7 +346,6 @@
 </head>
 <body class="font-sans text-gray-100">
 
-  <!-- NAVIGATION -->
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between">
       <div class="text-2xl md:text-3xl font-bold flex items-center">
@@ -400,10 +394,8 @@
     </div>
   </nav>
 
-  <!-- TOAST -->
   <div id="toast" class="toast"><i class="fas fa-check-circle"></i> Added to Cart!</div>
 
-  <!-- PRODUCT DETAIL MODAL (for customers) -->
   <div id="productModal" class="modal-overlay">
     <div class="modal-content">
       <button class="modal-close" onclick="closeProductDetailModal()">&times;</button>
@@ -420,17 +412,16 @@
     </div>
   </div>
 
-  <!-- MAIN CONTENT -->
   <div id="app" class="pt-16 min-h-screen"></div>
 
-  <!-- FOOTER -->
+  <!-- FOOTER - Updated to Kumasi -->
   <footer class="site-footer" id="contact">
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
         <div>
           <h4 class="text-white font-bold mb-2">Jinja</h4>
           <p class="text-sm">Premium room decoration items to the world.</p>
-          <p class="text-sm mt-1">📍 Accra, Ghana</p>
+          <p class="text-sm mt-1">📍 Kumasi, Ghana</p>
         </div>
         <div>
           <h4 class="text-white font-bold mb-2">Quick Links</h4>
@@ -444,7 +435,7 @@
           <p class="text-sm"><i class="fas fa-envelope mr-2"></i> info@jinja.com</p>
         </div>
       </div>
-      <div class="border-t border-gray-700 mt-6 pt-4 text-sm">&copy; 2025 Jinja – Room Decor Accra. All rights reserved.</div>
+      <div class="border-t border-gray-700 mt-6 pt-4 text-sm">&copy; 2025 Jinja – Room Decor Kumasi. All rights reserved.</div>
     </div>
   </footer>
 
@@ -466,12 +457,11 @@
     </div>
   </div>
 
-  <!-- FLOATING WHATSAPP -->
   <a href="https://wa.me/233277869200" target="_blank" class="whatsapp-float" title="Chat on WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
 
-  <!-- ADMIN MODAL (only for admins) -->
+  <!-- ADMIN MODAL -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -509,25 +499,21 @@
     let currentSearch = '';
     let categories = ['all', 'LED Lights', 'Neon Signs', 'Lamps', 'Room Decorations', 'Gaming Setup', 'Other'];
 
-    // ----- MOBILE MENU -----
     function toggleMobileMenu() {
       document.getElementById('mobileNavLinks').classList.toggle('hidden');
     }
 
-    // ----- SCROLL TO SECTION -----
     function scrollToSection(id) {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // ----- SEARCH -----
     function handleNavSearch(value) {
       currentSearch = value;
       if (currentPage === 'home') renderHome();
       else if (currentPage === 'shop') filterProducts();
     }
 
-    // ----- TOAST -----
     function showToast(message = 'Added to Cart!') {
       const toast = document.getElementById('toast');
       toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
@@ -536,7 +522,6 @@
       toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    // ----- PRODUCT DETAIL MODAL (for customers) -----
     let currentProduct = null;
     let currentImageIndex = 0;
 
@@ -600,7 +585,6 @@
       }
     });
 
-    // ----- LOADER -----
     function showLoader() {
       document.getElementById('app').innerHTML = `
         <div class="loader-container">
@@ -609,7 +593,6 @@
       `;
     }
 
-    // ----- CURRENCY -----
     async function fetchRates() {
       try {
         const res = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
@@ -645,7 +628,6 @@
       updateCartUI();
     }
 
-    // ----- CART -----
     async function fetchCart() {
       try {
         const res = await axios.get(`${API_URL}/cart/${cartId}`);
@@ -693,13 +675,13 @@
     function showCart() { document.getElementById('cartSidebar').classList.remove('translate-x-full'); }
     function closeCart() { document.getElementById('cartSidebar').classList.add('translate-x-full'); }
 
-    // ----- WHATSAPP -----
     async function whatsappBuy() {
       if (!cart.items.length) {
         alert('Your cart is empty');
         return;
       }
-      const location = prompt('Please enter your delivery location (e.g., campus, address, landmark):', '');
+      // Prompt includes "Kumasi campus" as example
+      const location = prompt('Please enter your delivery location (e.g., Kumasi campus, address, landmark):', '');
       if (location === null) return;
       const finalLocation = location.trim() || 'Not specified';
       let msg = "🛍️ *Jinja Order* 🛍️\n";
@@ -715,7 +697,6 @@
       window.location.href = `https://wa.me/233277869200?text=${encodedMsg}`;
     }
 
-    // ----- FETCH PRODUCTS -----
     async function fetchProducts(page = 1, category = 'all', search = '') {
       const url = `${API_URL}/products?page=${page}&limit=20&category=${category}&search=${search}`;
       const res = await axios.get(url);
@@ -726,7 +707,6 @@
       return categories;
     }
 
-    // ----- RENDER PRODUCT CARD -----
     function renderProductCard(p) {
       const descShort = p.description.length > 60 ? p.description.substring(0, 60) + '...' : p.description;
       return `
@@ -742,7 +722,6 @@
       `;
     }
 
-    // ----- RENDER HOME (delivery section moved up) -----
     async function renderHome() {
       showLoader();
       const data = await fetchProducts(1, 'all', currentSearch);
@@ -755,7 +734,6 @@
           <a href="#" onclick="showPage('shop')" class="hero-btn">Shop Now</a>
         </div>
 
-        <!-- Trust Badges -->
         <div class="container mx-auto px-4 py-4 flex flex-wrap justify-center gap-6 bg-gray-900/50 border-b border-gray-800">
           <div class="trust-badge"><i class="fas fa-lock"></i> Secure Payments</div>
           <div class="trust-badge"><i class="fas fa-truck"></i> Same-Day Campus Delivery</div>
@@ -763,20 +741,19 @@
           <div class="trust-badge"><i class="fab fa-whatsapp"></i> WhatsApp Support</div>
         </div>
 
-        <!-- DELIVERY INFORMATION (MOVED UP BEFORE PRODUCTS) -->
+        <!-- Delivery Information -->
         <div id="delivery" class="container mx-auto px-4 py-6">
           <div class="delivery-card max-w-2xl mx-auto">
             <h4 class="text-white font-bold mb-2">🚚 Delivery Information</h4>
             <div class="grid grid-cols-2 gap-3 text-sm">
               <div><span class="text-gray-400">Campus Delivery:</span> <span class="text-white font-semibold">₵10</span></div>
-              <div><span class="text-gray-400">Kumasi Delivery:</span> <span class="text-white font-semibold">₵15</span></div>
-              <div><span class="text-gray-400">Outside Kumasi:</span> <span class="text-white font-semibold">Contact Us</span></div>
               <div><span class="text-gray-400">Free Delivery:</span> <span class="text-white font-semibold">Orders over ₵200</span></div>
+              <div><span class="text-gray-400">Kumasi Delivery:</span> <span class="text-white font-semibold">Contact Us</span></div>
+              <div><span class="text-gray-400">Outside Kumasi:</span> <span class="text-white font-semibold">Contact Us</span></div>
             </div>
           </div>
         </div>
 
-        <!-- Categories -->
         <div id="categories" class="container mx-auto px-4 py-2">
           <h3 class="text-xl font-bold text-white mb-3">Categories</h3>
           <div class="flex flex-wrap gap-2">
@@ -789,7 +766,6 @@
           </div>
         </div>
 
-        <!-- Products Grid -->
         <div class="container mx-auto px-4 py-4">
           <h3 class="text-xl font-bold text-white mb-4">Our Collection</h3>
           <div id="homeProductsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
@@ -805,7 +781,6 @@
       }
     }
 
-    // ----- RENDER SHOP -----
     async function renderShop() {
       showLoader();
       await fetchCategories();
@@ -828,7 +803,6 @@
       await filterProducts();
     }
 
-    // ----- FILTER PRODUCTS -----
     async function filterProducts(page = 1) {
       const grid = document.getElementById('shopProductsGrid');
       if (!grid) return;
@@ -852,7 +826,6 @@
       }
     }
 
-    // ----- SET CATEGORY -----
     function setCategory(cat) {
       currentCategory = cat;
       document.querySelectorAll('.category-btn').forEach(btn => {
@@ -865,13 +838,11 @@
       else if (currentPage === 'shop') filterProducts();
     }
 
-    // ----- RERENDER -----
     function rerenderCurrentPage() {
       if (currentPage === 'home') renderHome();
       else if (currentPage === 'shop') renderShop();
     }
 
-    // ----- ADMIN LOGIN -----
     async function adminLogin(email) {
       try {
         const res = await axios.post(`${API_URL}/admin/login`, { email });
@@ -927,7 +898,6 @@
       else showAdminLogin();
     }
 
-    // ----- ADMIN PRODUCT MODAL -----
     function openAdminProductModal(productId = null) {
       if (!adminToken) {
         showAdminLogin();
