@@ -67,7 +67,7 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Floating WhatsApp button */
+    /* Floating WhatsApp */
     .whatsapp-float {
       position: fixed;
       bottom: 20px;
@@ -117,6 +117,7 @@
       border: 1px solid #374151;
     }
 
+    /* Product card - larger, all text white */
     .product-card {
       background: #1F2937;
       border: 1px solid #374151;
@@ -130,28 +131,28 @@
       box-shadow: 0 12px 30px rgba(0,0,0,0.3);
     }
     .product-card .product-image {
-      height: 200px;
+      height: 260px; /* increased from 200px */
       width: 100%;
       object-fit: cover;
     }
     .product-card .product-info {
-      padding: 14px 16px 16px;
+      padding: 16px 18px 18px;
     }
     .product-card .product-name {
       font-weight: 600;
-      font-size: 1rem;
-      color: white;
+      font-size: 1.1rem;
+      color: white; /* white */
       margin-bottom: 2px;
     }
     .product-card .product-price {
       font-weight: 700;
-      font-size: 1.2rem;
-      color: #0A192F;
+      font-size: 1.3rem;
+      color: white; /* changed from navy to white */
       margin-bottom: 6px;
     }
     .product-card .product-desc {
-      font-size: 0.8rem;
-      color: #9CA3AF;
+      font-size: 0.85rem;
+      color: white; /* white */
       margin-bottom: 10px;
       line-height: 1.4;
       display: -webkit-box;
@@ -163,18 +164,18 @@
       width: 100%;
       background: #0A192F;
       color: white;
-      padding: 8px 0;
+      padding: 10px 0; /* slightly taller */
       border-radius: 8px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 1rem;
       transition: all 0.3s;
       border: none;
       cursor: pointer;
     }
     .product-card .add-to-cart-btn:hover { background: #1a2a4f; transform: scale(1.02); }
-    .product-card .add-to-cart-btn.added { background: #059669; } /* green when added */
+    .product-card .add-to-cart-btn.added { background: #059669; }
 
-    /* Hero section */
+    /* Hero */
     .hero-section {
       background: linear-gradient(135deg, #0A192F 0%, #1a2a4a 50%, #0A192F 100%);
       padding: 60px 20px 50px;
@@ -200,6 +201,7 @@
       .hero-section h1 { font-size: 1.6rem; }
       .hero-section p { font-size: 0.95rem; }
       .whatsapp-float { width: 50px; height: 50px; font-size: 24px; bottom: 15px; right: 15px; }
+      .product-card .product-image { height: 200px; } /* slightly smaller on mobile but still larger than before */
     }
 
     .cart-badge {
@@ -212,7 +214,7 @@
       text-align: center;
     }
 
-    /* Toast notification */
+    /* Toast */
     .toast {
       position: fixed;
       bottom: 80px;
@@ -236,7 +238,7 @@
     }
     .toast i { margin-right: 8px; color: #22c55e; }
 
-    /* Product detail modal */
+    /* Product Detail Modal (for customers) */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -280,7 +282,7 @@
     .modal-product-price {
       font-size: 1.4rem;
       font-weight: 700;
-      color: #0A192F;
+      color: white; /* changed to white */
       margin: 8px 0 12px;
     }
     .modal-product-desc {
@@ -401,10 +403,10 @@
   <!-- TOAST -->
   <div id="toast" class="toast"><i class="fas fa-check-circle"></i> Added to Cart!</div>
 
-  <!-- PRODUCT DETAIL MODAL -->
+  <!-- PRODUCT DETAIL MODAL (for customers) -->
   <div id="productModal" class="modal-overlay">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeProductModal()">&times;</button>
+      <button class="modal-close" onclick="closeProductDetailModal()">&times;</button>
       <div class="modal-product-name" id="modalProductName">Product Name</div>
       <div class="modal-product-price" id="modalProductPrice">₵0.00</div>
       <div class="modal-image-container">
@@ -469,7 +471,7 @@
     <i class="fab fa-whatsapp"></i>
   </a>
 
-  <!-- ADMIN MODAL (unchanged) -->
+  <!-- ADMIN MODAL (only for admins) -->
   <div id="adminModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-gray-700">
       <div class="flex justify-between items-center mb-4">
@@ -534,11 +536,11 @@
       toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    // ----- PRODUCT DETAIL MODAL -----
+    // ----- PRODUCT DETAIL MODAL (for customers) -----
     let currentProduct = null;
     let currentImageIndex = 0;
 
-    function openProductModal(productId) {
+    function openProductDetailModal(productId) {
       const product = allProducts.find(p => p._id === productId);
       if (!product) return;
       currentProduct = product;
@@ -546,17 +548,17 @@
       document.getElementById('modalProductName').textContent = product.name;
       document.getElementById('modalProductPrice').textContent = formatPrice(product.priceGHS);
       document.getElementById('modalProductDesc').textContent = product.description;
-      updateModalImage();
+      updateProductDetailModalImage();
       document.getElementById('productModal').classList.add('active');
       document.body.style.overflow = 'hidden';
     }
 
-    function closeProductModal() {
+    function closeProductDetailModal() {
       document.getElementById('productModal').classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    function updateModalImage() {
+    function updateProductDetailModalImage() {
       const img = document.getElementById('modalProductImage');
       const dots = document.getElementById('modalDots');
       const prevBtn = document.getElementById('modalPrevBtn');
@@ -564,42 +566,37 @@
       if (!currentProduct || !currentProduct.images.length) return;
       const total = currentProduct.images.length;
       img.src = currentProduct.images[currentImageIndex];
-      // dots
       dots.innerHTML = '';
       for (let i = 0; i < total; i++) {
         const dot = document.createElement('button');
         dot.className = 'modal-dot' + (i === currentImageIndex ? ' active' : '');
-        dot.onclick = () => { currentImageIndex = i; updateModalImage(); };
+        dot.onclick = () => { currentImageIndex = i; updateProductDetailModalImage(); };
         dots.appendChild(dot);
       }
-      // show/hide arrows
       prevBtn.style.display = total > 1 ? 'block' : 'none';
       nextBtn.style.display = total > 1 ? 'block' : 'none';
     }
 
-    // Modal navigation
     document.getElementById('modalPrevBtn').addEventListener('click', () => {
       if (currentProduct && currentProduct.images.length > 0) {
         currentImageIndex = (currentImageIndex - 1 + currentProduct.images.length) % currentProduct.images.length;
-        updateModalImage();
+        updateProductDetailModalImage();
       }
     });
     document.getElementById('modalNextBtn').addEventListener('click', () => {
       if (currentProduct && currentProduct.images.length > 0) {
         currentImageIndex = (currentImageIndex + 1) % currentProduct.images.length;
-        updateModalImage();
+        updateProductDetailModalImage();
       }
     });
-    // Close modal on overlay click
     document.getElementById('productModal').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) closeProductModal();
+      if (e.target === e.currentTarget) closeProductDetailModal();
     });
-    // Add to cart from modal
     document.getElementById('modalAddToCart').addEventListener('click', () => {
       if (currentProduct) {
         addToCart(currentProduct._id);
         showToast('Added to Cart!');
-        closeProductModal();
+        closeProductDetailModal();
       }
     });
 
@@ -659,7 +656,6 @@
     async function addToCart(productId, qty = 1) {
       await axios.post(`${API_URL}/cart/${cartId}/items`, { productId, quantity: qty });
       fetchCart();
-      // flash button feedback (if button exists)
       const btn = document.querySelector(`.add-to-cart-btn[data-product-id="${productId}"]`);
       if (btn) {
         btn.classList.add('added');
@@ -734,7 +730,7 @@
     function renderProductCard(p) {
       const descShort = p.description.length > 60 ? p.description.substring(0, 60) + '...' : p.description;
       return `
-        <div class="product-card" onclick="openProductModal('${p._id}')">
+        <div class="product-card" onclick="openProductDetailModal('${p._id}')">
           <img src="${p.images[0]}" class="product-image" alt="${p.name}" loading="lazy">
           <div class="product-info">
             <div class="product-name">${p.name}</div>
@@ -746,7 +742,7 @@
       `;
     }
 
-    // ----- RENDER HOME -----
+    // ----- RENDER HOME (delivery section moved up) -----
     async function renderHome() {
       showLoader();
       const data = await fetchProducts(1, 'all', currentSearch);
@@ -759,6 +755,7 @@
           <a href="#" onclick="showPage('shop')" class="hero-btn">Shop Now</a>
         </div>
 
+        <!-- Trust Badges -->
         <div class="container mx-auto px-4 py-4 flex flex-wrap justify-center gap-6 bg-gray-900/50 border-b border-gray-800">
           <div class="trust-badge"><i class="fas fa-lock"></i> Secure Payments</div>
           <div class="trust-badge"><i class="fas fa-truck"></i> Same-Day Campus Delivery</div>
@@ -766,7 +763,21 @@
           <div class="trust-badge"><i class="fab fa-whatsapp"></i> WhatsApp Support</div>
         </div>
 
-        <div id="categories" class="container mx-auto px-4 py-6">
+        <!-- DELIVERY INFORMATION (MOVED UP BEFORE PRODUCTS) -->
+        <div id="delivery" class="container mx-auto px-4 py-6">
+          <div class="delivery-card max-w-2xl mx-auto">
+            <h4 class="text-white font-bold mb-2">🚚 Delivery Information</h4>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div><span class="text-gray-400">Campus Delivery:</span> <span class="text-white font-semibold">₵10</span></div>
+              <div><span class="text-gray-400">Kumasi Delivery:</span> <span class="text-white font-semibold">₵15</span></div>
+              <div><span class="text-gray-400">Outside Kumasi:</span> <span class="text-white font-semibold">Contact Us</span></div>
+              <div><span class="text-gray-400">Free Delivery:</span> <span class="text-white font-semibold">Orders over ₵200</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div id="categories" class="container mx-auto px-4 py-2">
           <h3 class="text-xl font-bold text-white mb-3">Categories</h3>
           <div class="flex flex-wrap gap-2">
       `;
@@ -778,21 +789,10 @@
           </div>
         </div>
 
+        <!-- Products Grid -->
         <div class="container mx-auto px-4 py-4">
           <h3 class="text-xl font-bold text-white mb-4">Our Collection</h3>
           <div id="homeProductsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-        </div>
-
-        <div id="delivery" class="container mx-auto px-4 py-6">
-          <div class="delivery-card max-w-2xl mx-auto">
-            <h4 class="text-white font-bold mb-2">🚚 Delivery Information</h4>
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div><span class="text-gray-400">Campus Delivery:</span> <span class="text-white font-semibold">₵10</span></div>
-              <div><span class="text-gray-400">Kumasi Delivery:</span> <span class="text-white font-semibold">₵15</span></div>
-              <div><span class="text-gray-400">Outside Kumasi:</span> <span class="text-white font-semibold">Contact Us</span></div>
-              <div><span class="text-gray-400">Free Delivery:</span> <span class="text-white font-semibold">Orders over ₵200</span></div>
-            </div>
-          </div>
         </div>
       `;
 
@@ -891,7 +891,7 @@
         <div class="container mx-auto px-4 py-8">
           <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold text-white">Admin Panel</h1>
-            <button onclick="openProductModal()" class="bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">+ Add Product</button>
+            <button onclick="openAdminProductModal()" class="bg-[#0A192F] hover:bg-[#0A192F]/80 px-4 py-2 rounded text-white">+ Add Product</button>
           </div>
           <div class="grid gap-3">
       `;
@@ -927,7 +927,38 @@
       else showAdminLogin();
     }
 
-    // ----- PRODUCT FORM (unchanged, included for completeness) -----
+    // ----- ADMIN PRODUCT MODAL -----
+    function openAdminProductModal(productId = null) {
+      if (!adminToken) {
+        showAdminLogin();
+        return;
+      }
+      window.editingProductId = productId;
+      document.getElementById('modalTitle').innerText = productId ? 'Edit Product' : 'Add Product';
+      document.getElementById('productForm').reset();
+      document.getElementById('existingImagesContainer').innerHTML = '';
+      if (productId) {
+        axios.get(`${API_URL}/products/${productId}`).then(res => {
+          const p = res.data;
+          document.getElementById('prodName').value = p.name;
+          document.getElementById('prodDesc').value = p.description;
+          document.getElementById('prodPrice').value = p.priceGHS;
+          document.getElementById('prodCategory').value = p.category;
+          document.getElementById('prodInStock').checked = p.inStock;
+          let imgsHtml = '';
+          p.images.forEach((img, idx) => {
+            imgsHtml += `<div class="relative"><img src="${img}" class="w-16 h-16 object-cover rounded"><button type="button" onclick="removeTempImage(${idx})" class="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 text-xs text-white">x</button></div>`;
+          });
+          document.getElementById('existingImagesContainer').innerHTML = imgsHtml;
+          window.existingImages = [...p.images];
+        });
+      } else { window.existingImages = []; }
+      document.getElementById('adminModal').classList.remove('hidden');
+    }
+
+    function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); window.editingProductId = null; }
+    function removeTempImage(idx) { window.existingImages.splice(idx,1); openAdminProductModal(window.editingProductId); }
+
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const files = document.getElementById('prodImages').files;
@@ -962,33 +993,6 @@
       }
     });
 
-    function openProductModal(productId = null) {
-      window.editingProductId = productId;
-      document.getElementById('modalTitle').innerText = productId ? 'Edit Product' : 'Add Product';
-      document.getElementById('productForm').reset();
-      document.getElementById('existingImagesContainer').innerHTML = '';
-      if (productId) {
-        axios.get(`${API_URL}/products/${productId}`).then(res => {
-          const p = res.data;
-          document.getElementById('prodName').value = p.name;
-          document.getElementById('prodDesc').value = p.description;
-          document.getElementById('prodPrice').value = p.priceGHS;
-          document.getElementById('prodCategory').value = p.category;
-          document.getElementById('prodInStock').checked = p.inStock;
-          let imgsHtml = '';
-          p.images.forEach((img, idx) => {
-            imgsHtml += `<div class="relative"><img src="${img}" class="w-16 h-16 object-cover rounded"><button type="button" onclick="removeTempImage(${idx})" class="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 text-xs text-white">x</button></div>`;
-          });
-          document.getElementById('existingImagesContainer').innerHTML = imgsHtml;
-          window.existingImages = [...p.images];
-        });
-      } else { window.existingImages = []; }
-      document.getElementById('adminModal').classList.remove('hidden');
-    }
-
-    function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); window.editingProductId = null; }
-    function removeTempImage(idx) { window.existingImages.splice(idx,1); openProductModal(window.editingProductId); }
-
     async function deleteProduct(id) {
       if (!confirm('Delete product?')) return;
       await axios.delete(`${API_URL}/admin/products/${id}`, { headers: { Authorization: `Bearer ${adminToken}` } });
@@ -996,7 +1000,7 @@
       if (currentPage === 'home') renderHome();
       else if (currentPage === 'shop') filterProducts();
     }
-    function editProduct(id) { openProductModal(id); }
+    function editProduct(id) { openAdminProductModal(id); }
 
     async function uploadLogo() {
       const fileInput = document.getElementById('logoUploadAdmin');
@@ -1031,12 +1035,10 @@
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
     }
 
-    // ----- ADMIN TRIGGER: #admin in URL -----
     if (window.location.hash === '#admin') {
       handleAdminTrigger();
     }
 
-    // ----- BOOTSTRAP -----
     (async () => {
       await fetchRates();
       setInterval(fetchRates, 3600000);
