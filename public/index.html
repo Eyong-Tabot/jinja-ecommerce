@@ -11,6 +11,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <style>
+    /* === Existing styles === */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(30px); }
       to { opacity: 1; transform: translateY(0); }
@@ -342,10 +343,71 @@
       transition: background 0.3s;
     }
     .modal-add-to-cart:hover { background: #1a2a4f; }
+
+    /* === Announcement banner styles === */
+    .announcement-banner {
+      background: linear-gradient(135deg, #0A192F 0%, #1a2a4a 50%, #0A192F 100%);
+      border-bottom: 2px solid #0A192F;
+      color: #E5E7EB;
+      padding: 16px 20px;
+      text-align: center;
+      position: relative;
+      display: none; /* hidden by default, shown by JS */
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.6s ease, padding 0.6s ease, opacity 0.4s ease;
+      opacity: 0;
+    }
+    .announcement-banner.show {
+      display: block;
+      max-height: 800px; /* enough to contain content */
+      padding: 20px 20px;
+      opacity: 1;
+    }
+    .announcement-banner .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: #9CA3AF;
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .announcement-banner .close-btn:hover { color: white; }
+    .announcement-banner h2 {
+      color: #F59E0B;
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+    .announcement-banner p {
+      max-width: 700px;
+      margin: 0 auto 8px;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+    .announcement-banner .highlight {
+      color: #F59E0B;
+      font-weight: 600;
+    }
+    .announcement-banner .tagline {
+      font-weight: 700;
+      color: white;
+      margin-top: 8px;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+    @media (max-width: 640px) {
+      .announcement-banner h2 { font-size: 1.3rem; }
+      .announcement-banner p { font-size: 0.9rem; }
+    }
   </style>
 </head>
 <body class="font-sans text-gray-100">
 
+  <!-- NAVIGATION -->
   <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-gray-900 shadow-lg border-b border-gray-800">
     <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between">
       <div class="text-2xl md:text-3xl font-bold flex items-center">
@@ -394,8 +456,32 @@
     </div>
   </nav>
 
+  <!-- === ANNOUNCEMENT BANNER === -->
+  <div id="announcementBanner" class="announcement-banner">
+    <button class="close-btn" onclick="dismissAnnouncement()">×</button>
+    <h2>🎉 JINJA IS OFFICIALLY HERE! 🎉</h2>
+    <p>
+      As we come to the end of our exams, it is a great honor and pleasure for us to officially announce the beginning of <span class="highlight">JINJA!</span> 🥳
+    </p>
+    <p>
+      We would like to wish everyone writing their final exams the very best of luck. 💯📚 And to those who are already done, stay blessed and enjoy your break! ❤️
+    </p>
+    <p>
+      JINJA is here to cover most of your student needs — whether it’s Tech, Décor, lifestyle products, and more. 🛍️✨
+    </p>
+    <p>
+      Our products are carefully sourced and imported by our team to ensure you get quality products at prices you'll truly appreciate. 🔥
+    </p>
+    <p>
+      So stay tuned, support us, and enjoy the journey with us as we officially get started. 🚀
+    </p>
+    <div class="tagline">Welcome to JINJA — Quality. Style. Convenience. 🖤</div>
+  </div>
+
+  <!-- TOAST -->
   <div id="toast" class="toast"><i class="fas fa-check-circle"></i> Added to Cart!</div>
 
+  <!-- PRODUCT MODAL -->
   <div id="productModal" class="modal-overlay">
     <div class="modal-content">
       <button class="modal-close" onclick="closeProductDetailModal()">&times;</button>
@@ -412,8 +498,10 @@
     </div>
   </div>
 
+  <!-- MAIN CONTENT -->
   <div id="app" class="pt-16 min-h-screen"></div>
 
+  <!-- FOOTER -->
   <footer class="site-footer" id="contact">
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
@@ -456,6 +544,7 @@
     </div>
   </div>
 
+  <!-- FLOATING WHATSAPP -->
   <a href="https://wa.me/233277869200" target="_blank" class="whatsapp-float" title="Chat on WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
@@ -498,21 +587,50 @@
     let currentSearch = '';
     let categories = ['all', 'LED Lights', 'Neon Signs', 'Lamps', 'Room Decorations', 'Gaming Setup', 'Other'];
 
+    // --- ANNOUNCEMENT BANNER LOGIC ---
+    function showAnnouncement() {
+      const banner = document.getElementById('announcementBanner');
+      if (banner) {
+        banner.classList.add('show');
+      }
+    }
+
+    function dismissAnnouncement() {
+      const banner = document.getElementById('announcementBanner');
+      if (banner) {
+        banner.classList.remove('show');
+        localStorage.setItem('announcementShown', 'true');
+      }
+    }
+
+    // Check if we should show the banner
+    function initAnnouncement() {
+      const alreadyShown = localStorage.getItem('announcementShown') === 'true';
+      if (!alreadyShown) {
+        // Show with a small delay for smooth transition
+        setTimeout(showAnnouncement, 300);
+      }
+    }
+
+    // --- MOBILE MENU ---
     function toggleMobileMenu() {
       document.getElementById('mobileNavLinks').classList.toggle('hidden');
     }
 
+    // --- SCROLL TO SECTION ---
     function scrollToSection(id) {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    // --- SEARCH ---
     function handleNavSearch(value) {
       currentSearch = value;
       if (currentPage === 'home') renderHome();
       else if (currentPage === 'shop') filterProducts();
     }
 
+    // --- TOAST ---
     function showToast(message = 'Added to Cart!') {
       const toast = document.getElementById('toast');
       toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
@@ -521,6 +639,7 @@
       toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
+    // --- PRODUCT DETAIL MODAL ---
     let currentProduct = null;
     let currentImageIndex = 0;
 
@@ -584,6 +703,7 @@
       }
     });
 
+    // --- LOADER ---
     function showLoader() {
       document.getElementById('app').innerHTML = `
         <div class="loader-container">
@@ -592,6 +712,7 @@
       `;
     }
 
+    // --- CURRENCY ---
     async function fetchRates() {
       try {
         const res = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
@@ -627,6 +748,7 @@
       updateCartUI();
     }
 
+    // --- CART ---
     async function fetchCart() {
       try {
         const res = await axios.get(`${API_URL}/cart/${cartId}`);
@@ -674,6 +796,7 @@
     function showCart() { document.getElementById('cartSidebar').classList.remove('translate-x-full'); }
     function closeCart() { document.getElementById('cartSidebar').classList.add('translate-x-full'); }
 
+    // --- WHATSAPP ---
     async function whatsappBuy() {
       if (!cart.items.length) {
         alert('Your cart is empty');
@@ -695,6 +818,7 @@
       window.location.href = `https://wa.me/233277869200?text=${encodedMsg}`;
     }
 
+    // --- FETCH PRODUCTS ---
     async function fetchProducts(page = 1, category = 'all', search = '') {
       const url = `${API_URL}/products?page=${page}&limit=20&category=${category}&search=${search}`;
       const res = await axios.get(url);
@@ -705,6 +829,7 @@
       return categories;
     }
 
+    // --- RENDER PRODUCT CARD ---
     function renderProductCard(p) {
       const descShort = p.description.length > 60 ? p.description.substring(0, 60) + '...' : p.description;
       return `
@@ -720,6 +845,7 @@
       `;
     }
 
+    // --- RENDER HOME ---
     async function renderHome() {
       showLoader();
       const data = await fetchProducts(1, 'all', currentSearch);
@@ -777,6 +903,7 @@
       }
     }
 
+    // --- RENDER SHOP ---
     async function renderShop() {
       showLoader();
       await fetchCategories();
@@ -799,6 +926,7 @@
       await filterProducts();
     }
 
+    // --- FILTER PRODUCTS ---
     async function filterProducts(page = 1) {
       const grid = document.getElementById('shopProductsGrid');
       if (!grid) return;
@@ -822,6 +950,7 @@
       }
     }
 
+    // --- SET CATEGORY ---
     function setCategory(cat) {
       currentCategory = cat;
       document.querySelectorAll('.category-btn').forEach(btn => {
@@ -834,11 +963,13 @@
       else if (currentPage === 'shop') filterProducts();
     }
 
+    // --- RERENDER ---
     function rerenderCurrentPage() {
       if (currentPage === 'home') renderHome();
       else if (currentPage === 'shop') renderShop();
     }
 
+    // --- ADMIN LOGIN ---
     async function adminLogin(email) {
       try {
         const res = await axios.post(`${API_URL}/admin/login`, { email });
@@ -894,6 +1025,7 @@
       else showAdminLogin();
     }
 
+    // --- ADMIN PRODUCT MODAL ---
     function openAdminProductModal(productId = null) {
       if (!adminToken) {
         showAdminLogin();
@@ -1001,10 +1133,12 @@
       else if (page === 'shop') { currentPage = 'shop'; renderShop(); }
     }
 
+    // --- ADMIN TRIGGER: #admin in URL ---
     if (window.location.hash === '#admin') {
       handleAdminTrigger();
     }
 
+    // --- BOOTSTRAP ---
     (async () => {
       await fetchRates();
       setInterval(fetchRates, 3600000);
@@ -1014,6 +1148,8 @@
       currencies.forEach(c => currHtml += `<button onclick="setCurrency({code:'${c.code}',symbol:'${c.symbol}'})" class="block w-full text-left px-4 py-2 hover:bg-[#0A192F]/30 text-white">${c.code} - ${c.name}</button>`);
       document.getElementById('currencyDropdown').innerHTML = currHtml;
       renderHome();
+      // Show announcement after page loads
+      initAnnouncement();
     })();
   </script>
 </body>
